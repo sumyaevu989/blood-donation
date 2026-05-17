@@ -1,0 +1,149 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Blood Donation System - Home{% endblock %}
+{% block body_class %}dashboard-page{% endblock %}
+
+{% block content %}
+<div class="container search-container">
+    
+    <!-- Blood Bank Inventory Summary -->
+    {% if inventory %}
+    <div style="margin-bottom: 30px;">
+        <h2 style="margin-bottom: 15px; color: #2C3E50;">🏥 Local Blood Bank Inventory</h2>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 15px;">
+            {% for item in inventory %}
+            <div style="background: white; padding: 15px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); text-align: center; border: 1px solid #eee;">
+                <div style="font-size: 24px; font-weight: 800; color: #D32F2F;">{{ item.blood_group }}</div>
+                <div style="font-size: 16px; font-weight: bold; margin-top: 5px;">{{ item.bags_available }} Bags</div>
+                <div style="font-size: 11px; color: #888; margin-top: 5px;">Updated: {{ item.last_updated|timesince }} ago</div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="page-header">
+        <h1>🔍 Search Blood Donors</h1>
+        <p>Find available donors instantly</p>
+    </div>
+
+    <!-- FILTER -->
+    <div class="search-filters-card">
+        <h2>Search Filters</h2>
+        <div class="search-filters">
+            <!-- Blood Group -->
+            <div class="filter-group">
+                <label>Blood Group</label>
+                <select id="bloodGroup">
+                    <option value="">All</option>
+                    <option>O+</option><option>O-</option>
+                    <option>A+</option><option>A-</option>
+                    <option>B+</option><option>B-</option>
+                    <option>AB+</option><option>AB-</option>
+                </select>
+            </div>
+            <!-- Location -->
+            <div class="filter-group">
+                <label>Location</label>
+                <input type="text" id="locationSearch" placeholder="Enter District">
+            </div>
+            <!-- Area -->
+            <div class="filter-group">
+                <label>Area / Neighborhood</label>
+                <input type="text" id="areaSearch" placeholder="Search by area">
+            </div>
+            <!-- Buttons -->
+            <div class="filter-actions">
+                <button class="btn-search" onclick="searchDonors()">Search</button>
+                <button class="btn-reset" onclick="window.location.reload()">Reset</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- CONTACT MODAL -->
+    <div id="contactModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">Contact Donor: <span id="contactDonorName"></span></div>
+            <p style="color: var(--text-muted); margin-bottom: 20px;">Use the following methods to request an emergency blood donation.</p>
+            <div style="display:flex; flex-direction:column; gap:10px;">
+                <a id="btnCall" href="#" class="btn-primary" style="text-align:center; text-decoration:none; background:#28a745;">📞 Call Phone</a>
+                <a id="btnWa" href="#" class="btn-primary" style="text-align:center; text-decoration:none; background:#25D366; color:white;" target="_blank">💬 Send WhatsApp</a>
+                <a id="btnEmail" href="#" class="btn-primary" style="text-align:center; text-decoration:none; background:#007bff;">✉️ Send Email</a>
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn-secondary" onclick="document.getElementById('contactModal').style.display='none'">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- TABLE -->
+    <div style="max-height:400px; overflow-y:auto;">
+        <table class="results-table">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Blood</th>
+                    <th>Email</th>
+                    <th>Phone</th>
+                    <th>Location</th>
+                    <th>Area</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for donor in donors %}
+                <tr>
+                    <td>{{ donor.user.first_name }}</td>
+                    <td><span class="blood-badge">{{ donor.blood_group }}</span></td>
+                    <td>{% if user.is_authenticated %}{{ donor.user.email }}{% else %}*********@***.com{% endif %}</td>
+                    <td>{{ donor.phone }}</td>
+                    <td>{{ donor.location }}</td>
+                    <td>{{ donor.area|default:"-" }}</td>
+                    <td>
+                        <button class="btn-contact" onclick="handleContactDjango('{{ donor.phone }}', '{{ donor.user.first_name }}', '{{ donor.user.email }}', '{% if user.is_authenticated %}true{% else %}false{% endif %}')">
+                            Contact
+                        </button>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="7" class="no-search">No donors found. Be the first to register!</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <div class="results-count">{{ donors.count }} donors registered</div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function searchDonors() {
+        const bg = document.getElementById('bloodGroup').value;
+        const loc = document.getElementById('locationSearch').value;
+        const area = document.getElementById('areaSearch').value;
+        
+        // Build the URL with query parameters for the backend to filter
+        const params = new URLSearchParams();
+        if (bg) params.append('bg', bg);
+        if (loc) params.append('loc', loc);
+        if (area) params.append('area', area);
+        
+        window.location.href = "{% url 'index' %}?" + params.toString();
+    }
+
+    function handleContactDjango(phone, name, email, isAuthenticated) {
+        if (isAuthenticated === 'true') {
+            document.getElementById('contactDonorName').innerText = name;
+            document.getElementById('btnCall').href = `tel:${phone}`;
+            const waNumber = phone.replace(/[^0-9]/g, ""); 
+            document.getElementById('btnWa').href = `https://wa.me/${waNumber}?text=Hi%20${encodeURIComponent(name)},%20I%20have%20an%20urgent%20need%20for%20blood.`;
+            document.getElementById('btnEmail').href = `mailto:${email}?subject=Urgent%20Blood%20Donation%20Request`;
+            document.getElementById('contactModal').style.display = "flex";
+        } else {
+            alert('Please login to view contact details and connect with the donor.');
+            window.location.href = "{% url 'login' %}";
+        }
+    }
+</script>
+{% endblock %}

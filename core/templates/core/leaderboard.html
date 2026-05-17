@@ -1,0 +1,37 @@
+{% extends 'core/base.html' %}
+{% block title %}Leaderboard{% endblock %}
+{% block content %}
+<div class="container" style="max-width: 800px; margin-top: 50px;">
+    <h1 style="text-align: center; color: #d32f2f;">🏆 Top Blood Donors</h1>
+    <p style="text-align: center; color: #555;">Meet the heroes saving lives every day!</p>
+    
+    <div style="background: white; border-radius: 10px; padding: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+        <table style="width: 100%; border-collapse: collapse; text-align: left;">
+            <thead>
+                <tr style="border-bottom: 2px solid #eee;">
+                    <th style="padding: 10px 0;">Rank</th>
+                    <th style="padding: 10px 0;">Donor Name</th>
+                    <th style="padding: 10px 0; text-align: center;">Blood Group</th>
+                    <th style="padding: 10px 0; text-align: center;">Total Donations</th>
+                    <th style="padding: 10px 0; text-align: right;">Badge</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for top_donor in top_donors %}
+                <tr style="border-bottom: 1px solid #eee;">
+                    <td style="padding: 15px 0;"><h1>#{{ forloop.counter }}</h1></td>
+                    <td style="padding: 15px 0; font-weight: bold; color: #333;">{{ top_donor.user.username }}</td>
+                    <td style="padding: 15px 0; text-align: center; color: #d32f2f; font-weight: bold;">{{ top_donor.blood_group }}</td>
+                    <td style="padding: 15px 0; text-align: center;">{{ top_donor.total_donations }}</td>
+                    <td style="padding: 15px 0; text-align: right; font-size: 1.5rem;">{{ top_donor.badge }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" style="padding: 15px 0; text-align: center;">No donors found.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

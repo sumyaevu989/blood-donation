@@ -1,0 +1,181 @@
+{% extends "admin/base_site.html" %}
+{% load static %}
+
+{% block title %}{{ site_title|default:_('Django site admin') }}{% endblock %}
+
+{% block content %}
+<div class="admin-dashboard-container">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+        <h1 style="margin:0">{{ site_header }}</h1>
+        <div style="display:flex;gap:10px;align-items:center">
+            <a class="button" href="/admin/core/bloodrequest/add/" style="background:#D32F2F;color:#fff;padding:8px 12px;border-radius:8px;text-decoration:none;font-weight:700">+ Create Request</a>
+            <button id="openEmailModal" style="background:#0369a1;color:#fff;padding:8px 12px;border-radius:8px;border:none;font-weight:700;cursor:pointer">✉ Email Donors</button>
+            <button id="openAmbulanceModal" style="background:#f59e0b;color:#fff;padding:8px 12px;border-radius:8px;border:none;font-weight:700;cursor:pointer">🚑 Request Ambulance</button>
+            <div style="background:#fff;padding:6px 10px;border-radius:20px;border:1px solid #f1f3f5;font-weight:700;color:#D32F2F">Urgent: {{ urgent_count }}</div>
+        </div>
+    </div>
+    <div class="admin-stats-grid">
+        <div class="admin-stat-card">
+            <div class="icon">👥</div>
+            <div class="meta">
+                <div class="label">Total Donors</div>
+                <div class="value">{{ donors_count }}</div>
+            </div>
+        </div>
+
+        <div class="admin-stat-card">
+            <div class="icon">🩸</div>
+            <div class="meta">
+                <div class="label">Blood Requests</div>
+                <div class="value">{{ requests_count }}</div>
+            </div>
+        </div>
+
+        <div class="admin-stat-card">
+            <div class="icon">✉️</div>
+            <div class="meta">
+                <div class="label">Messages</div>
+                <div class="value">{{ messages_count }}</div>
+            </div>
+        </div>
+
+        <div class="admin-stat-card">
+            <div class="icon">🧑‍💻</div>
+            <div class="meta">
+                <div class="label">Users</div>
+                <div class="value">{{ users_count }}</div>
+            </div>
+        </div>
+    </div>
+
+    <hr style="margin:18px 0; opacity:0.08;" />
+
+    <div style="display: flex; flex-wrap: wrap; gap: 20px;">
+        <div style="flex: 1; min-width: 300px;">
+            <h3 style="font-size:16px;margin-bottom:10px;color:#2C3E50;">App Models (Tables)</h3>
+            <div style="background:#fff;padding:12px;border-radius:10px;border:1px solid #f1f3f5;box-shadow:0 6px 18px rgba(0,0,0,0.04)">
+                {% if app_list %}
+                    {% for app in app_list %}
+                        <div style="margin-bottom: 15px;">
+                            <strong style="color: #D32F2F; font-size: 15px; border-bottom: 1px solid #eee; display: block; padding-bottom: 5px; margin-bottom: 5px;">{{ app.name }}</strong>
+                            <ul style="list-style: none; padding-left: 0; margin: 0;">
+                            {% for model in app.models %}
+                                <li style="padding: 6px 0; border-bottom: 1px dashed #f5f5f5;">
+                                    <a href="{{ model.admin_url }}" style="text-decoration: none; color: #0369a1; font-weight: bold; display: flex; justify-content: space-between;">
+                                        <span>{{ model.name }}</span>
+                                        <span style="color: #888;">&rarr;</span>
+                                    </a>
+                                </li>
+                            {% endfor %}
+                            </ul>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <p>You don't have permission to edit models.</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <div style="flex: 2; min-width: 300px;">
+            <h3 style="font-size:16px;margin-bottom:10px;color:#2C3E50;">Recent Blood Requests</h3>
+            <div style="background:#fff;padding:12px;border-radius:10px;border:1px solid #f1f3f5;box-shadow:0 6px 18px rgba(0,0,0,0.04)">
+                <table style="width:100%;border-collapse:collapse">
+                    <thead>
+                        <tr style="text-align:left;color:#546E7A;font-size:13px">
+                            <th>Patient</th>
+                            <th>Blood Group</th>
+                            <th>Hospital</th>
+                            <th>When</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    {% for r in recent_requests %}
+                        <tr style="border-top:1px solid #f1f3f5;padding:8px;color:#2C3E50;font-size:14px">
+                            <td style="padding:8px 6px">{{ r.patient_name }}</td>
+                            <td style="padding:8px 6px">{{ r.blood_group }}</td>
+                            <td style="padding:8px 6px">{{ r.hospital }}</td>
+                            <td style="padding:8px 6px">{{ r.created_at|date:"M d, H:i" }}</td>
+                        </tr>
+                    {% empty %}
+                        <tr><td colspan="4" style="padding:8px;color:#546E7A">No recent requests</td></tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div style="margin-top:18px;">
+        <h3 style="font-size:16px;margin-bottom:10px;color:#2C3E50;">Donors by Blood Group</h3>
+        <div style="width:100%;max-width:600px;background:#fff;padding:12px;border-radius:10px;border:1px solid #f1f3f5;box-shadow:0 6px 18px rgba(0,0,0,0.04)">
+            <canvas id="donorsChart" width="600" height="220"></canvas>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        const donorsByGroup = {{ donors_by_group|default:"{}"|safe }};
+        const labels = Object.keys(donorsByGroup);
+        const data = labels.map(l => donorsByGroup[l]);
+        const ctx = document.getElementById('donorsChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Donors',
+                    data: data,
+                    backgroundColor: 'rgba(211,47,47,0.7)'
+                }]
+            },
+            options: {responsive:true,maintainAspectRatio:false}
+        });
+    </script>
+
+    <!-- Email Donors Modal -->
+    <div id="emailModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);align-items:center;justify-content:center;padding:20px">
+        <form method="POST" action="{{ site_url|default:'/admin/' }}email-donors/" style="background:#fff;padding:18px;border-radius:10px;max-width:720px;width:100%">
+            {% csrf_token %}
+            <h3 style="margin-top:0">Email All Donors</h3>
+            <div style="margin-bottom:8px"><label>Subject</label><input name="subject" style="width:100%;padding:8px;margin-top:6px" required></div>
+            <div style="margin-bottom:8px"><label>Message</label><textarea name="body" rows="6" style="width:100%;padding:8px;margin-top:6px" required></textarea></div>
+            <div style="display:flex;gap:8px;justify-content:flex-end">
+                <button type="button" onclick="document.getElementById('emailModal').style.display='none'" style="padding:8px 12px">Cancel</button>
+                <button type="submit" style="background:#0369a1;color:#fff;padding:8px 12px;border-radius:6px;border:none">Send</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Ambulance Modal -->
+    <div id="ambulanceModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);align-items:center;justify-content:center;padding:20px">
+        <form method="POST" action="{{ site_url|default:'/admin/' }}request-ambulance/" style="background:#fff;padding:18px;border-radius:10px;max-width:480px;width:100%">
+            {% csrf_token %}
+            <h3 style="margin-top:0">Request Ambulance</h3>
+            <div style="margin-bottom:8px">
+                <label>Request ID</label>
+                <input id="ambulance_request_id" name="request_id" style="width:100%;padding:8px;margin-top:6px" required>
+            </div>
+            <div style="margin-bottom:8px"><label>Ambulance Contact</label><input name="ambulance_contact" style="width:100%;padding:8px;margin-top:6px" placeholder="Phone or provider"></div>
+            <div style="display:flex;gap:8px;justify-content:flex-end">
+                <button type="button" onclick="document.getElementById('ambulanceModal').style.display='none'" style="padding:8px 12px">Cancel</button>
+                <button type="submit" style="background:#f59e0b;color:#fff;padding:8px 12px;border-radius:6px;border:none">Request</button>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        document.getElementById('openEmailModal').addEventListener('click', function(){ document.getElementById('emailModal').style.display='flex'; });
+        document.getElementById('openAmbulanceModal').addEventListener('click', function(){ document.getElementById('ambulanceModal').style.display='flex'; });
+    </script>
+</div>
+
+<style>
+.admin-stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:18px;margin-bottom:20px}
+.admin-stat-card{display:flex;align-items:center;gap:12px;padding:16px;background:#fff;border-radius:10px;box-shadow:0 6px 18px rgba(0,0,0,0.06);border:1px solid #f1f3f5}
+.admin-stat-card .icon{width:56px;height:56px;border-radius:10px;display:flex;align-items:center;justify-content:center;background:rgba(211,47,47,0.06);color:#D32F2F;font-size:22px}
+.admin-stat-card .meta .label{font-size:13px;color:#546E7A;font-weight:700}
+.admin-stat-card .meta .value{font-size:28px;color:#D32F2F;font-weight:900;line-height:1}
+.admin-dashboard-container h1{font-size:20px;color:#2C3E50;margin:0 0 8px}
+</style>
+
+{% endblock %}

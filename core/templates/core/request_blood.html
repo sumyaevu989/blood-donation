@@ -1,0 +1,105 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Blood Donation System - Request Blood{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="page-header">
+        <h1>🚨 Emergency Blood Request</h1>
+        <p>Submit an urgent request or view those currently in need of blood.</p>
+    </div>
+
+    <!-- Render success messages -->
+    {% if messages %}
+        {% for message in messages %}
+            <div style="background-color: #d4edda; color: #155724; padding: 15px; margin-bottom: 20px; border-radius: 8px; font-weight: 600;">
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <div style="display: flex; gap: 30px; flex-wrap: wrap;">
+        
+        <!-- Form to Request Blood -->
+        <div class="search-filters-card" style="flex: 1; min-width: 300px;">
+            <h2>Submit a Request</h2>
+            <form method="POST" action="{% url 'request_blood' %}">
+                {% csrf_token %}
+                <div class="form-group" style="margin-bottom:15px;">
+                    <label>Patient Name:</label>
+                    <input type="text" name="patient_name" placeholder="Name of patient" required style="width:100%; padding:10px; border-radius:8px; border:1px solid #ddd;">
+                </div>
+
+                <div class="form-group" style="margin-bottom:15px;">
+                    <label>Blood Group Needed:</label>
+                    <select name="blood_group" required style="width:100%; padding:10px; border-radius:8px; border:1px solid #ddd;">
+                        <option value="">Select Blood Group</option>
+                        <option value="O+">O+</option><option value="O-">O-</option>
+                        <option value="A+">A+</option><option value="A-">A-</option>
+                        <option value="B+">B+</option><option value="B-">B-</option>
+                        <option value="AB+">AB+</option><option value="AB-">AB-</option>
+                    </select>
+                </div>
+
+                <div class="form-group" style="margin-bottom:15px;">
+                    <label>Hospital/Location:</label>
+                    <input type="text" name="hospital" placeholder="Hospital name & Area" required style="width:100%; padding:10px; border-radius:8px; border:1px solid #ddd;">
+                </div>
+
+                <div class="form-group" style="margin-bottom:15px;">
+                    <label>Contact Number:</label>
+                    <input type="tel" name="contact_number" placeholder="Phone number for donors to reach you" required style="width:100%; padding:10px; border-radius:8px; border:1px solid #ddd;">
+                </div>
+
+                <div class="form-group" style="margin-bottom:20px;">
+                    <label>Urgency Level:</label>
+                    <select name="urgency" required style="width:100%; padding:10px; border-radius:8px; border:1px solid #ddd;">
+                        <option value="Urgent (Today)">Urgent (Today)</option>
+                        <option value="Within 24 Hours">Within 24 Hours</option>
+                        <option value="Within 48 Hours">Within 48 Hours</option>
+                        <option value="Next Week">Next Week</option>
+                    </select>
+                </div>
+
+                <button type="submit" class="btn-primary" style="width:100%; padding:12px; font-size:16px;">Publish Request</button>
+            </form>
+        </div>
+
+        <!-- List of Active Requests -->
+        <div class="summary-card" style="flex: 2; min-width: 400px; max-height: 550px; overflow-y: auto;">
+            <h2>Recent Blood Requests</h2>
+            <table class="results-table">
+                <thead>
+                    <tr>
+                        <th>Patient</th>
+                        <th>Blood Group</th>
+                        <th>Hospital</th>
+                        <th>Contact</th>
+                        <th>Urgency</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for req in requests %}
+                    <tr>
+                        <td><strong>{{ req.patient_name }}</strong></td>
+                        <td><span class="blood-badge" style="background:#D32F2F;">{{ req.blood_group }}</span></td>
+                        <td>{{ req.hospital }}</td>
+                        <td><strong>{{ req.contact_number }}</strong></td>
+                        <td>
+                            <span style="color:#D32F2F; font-weight:bold;">{{ req.urgency }}</span><br>
+                            <a href="https://api.whatsapp.com/send?text=Urgent Blood Required! {{ req.blood_group }} blood needed at {{ req.hospital }} for {{ req.patient_name }}. Contact: {{ req.contact_number }}" target="_blank" style="display: inline-block; background: #25D366; color: white; padding: 3px 6px; border-radius: 4px; text-decoration: none; font-size: 0.75em; margin-top: 5px;">📱 Share WA</a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" style="text-align:center; padding:20px;">No active blood requests at this time.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+    </div>
+</div>
+{% endblock %}

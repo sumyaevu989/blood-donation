@@ -1,0 +1,131 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Blood Donation System - Dashboard{% endblock %}
+{% block body_class %}dashboard-page{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <div class="welcome-section" style="background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);">
+        <h1 style="font-weight: 800; font-size: 42px; text-transform: uppercase;">Dashboard</h1>
+        <p style="font-size: 20px;">Welcome back, {{ user.first_name }}!</p>
+    </div>
+
+    <!-- Admin Stats Cards -->
+    <div class="admin-stats-grid">
+        <div class="stat-card">
+            <div class="card-icon">👥</div>
+            <h4>Donors</h4>
+            <div class="stat-number">{{ donors_count }}</div>
+        </div>
+
+        <div class="stat-card">
+            <div class="card-icon">🩸</div>
+            <h4>Blood Requests</h4>
+            <div class="stat-number">{{ requests_count }}</div>
+        </div>
+
+        <div class="stat-card">
+            <div class="card-icon">✉️</div>
+            <h4>Messages</h4>
+            <div class="stat-number">{{ messages_count }}</div>
+        </div>
+
+        <div class="stat-card">
+            <div class="card-icon">🛠️</div>
+            <h4>Users</h4>
+            <div class="stat-number">{{ users_count }}</div>
+        </div>
+    </div>
+
+    <div class="dashboard-grid">
+        <div class="dashboard-card">
+            <div class="card-icon">👤</div>
+            <h3>Your Profile</h3>
+            <div>
+                <p><strong>Username:</strong> {{ user.username }}</p>
+                <p><strong>Email:</strong> {{ user.email }}</p>
+                {% if donor %}
+                    <p><strong>Blood Group:</strong> {{ donor.blood_group }}</p>
+                    <p><strong>Location:</strong> {{ donor.location }}</p>
+                    <p><strong>Phone:</strong> {{ donor.phone }}</p>
+                    <hr style="margin: 10px 0; border: none; border-top: 1px solid #eee;">
+                    <p><strong>Total Donations:</strong> {{ donor.total_donations }}</p>
+                    <p><strong>Donor Badge:</strong> <span style="font-weight: 800; font-size: 1.1em;">{{ donor.badge }}</span></p>
+                    <p><strong>🎁 Reward Points:</strong> <span style="color: #f39c12; font-weight: bold; font-size: 1.1em;">{{ donor.reward_points }} pts</span> 
+                        <br><small style="color: #888;">(Redeemable for 10% discount at partner hospitals!)</small>
+                    </p>
+                    <p><strong>Next Eligible Date:</strong> 
+                        {% if donor.is_eligible %}
+                            <span style="color: green; font-weight: bold;">Eligible Now!</span>
+                        {% else %}
+                            <span style="color: red; font-weight: bold;">{{ donor.next_eligible_date }}</span>
+                        {% endif %}
+                    </p>
+                {% else %}
+                    <p>Your donor profile is incomplete.</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="dashboard-card">
+            <div class="card-icon">🎯</div>
+            <h3>Quick Actions</h3>
+            <div class="action-buttons">
+                <button class="btn-action" onclick="window.location.href='{% url 'index' %}'">🔍 Search Donor</button>
+                <button class="btn-action" onclick="window.location.href='{% url 'request_blood' %}'">🚨 Request Blood</button>
+                <button class="btn-action" onclick="document.getElementById('userProfileModal').style.display='flex'">⚙️ Edit Profile</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Update Profile Modal -->
+<div id="userProfileModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">Update Profile</div>
+        <form method="POST" action="{% url 'update_profile' %}">
+            {% csrf_token %}
+            <div class="form-group">
+                <label>First Name</label>
+                <input type="text" name="first_name" value="{{ user.first_name }}" required>
+            </div>
+            <div class="form-group">
+                <label>Email ID</label>
+                <input type="email" name="email" value="{{ user.email }}" required>
+            </div>
+            {% if donor %}
+            <div class="form-group">
+                <label>Blood Group</label>
+                <select name="blood_group" required>
+                    <option value="O+" {% if donor.blood_group == "O+" %}selected{% endif %}>O+</option>
+                    <option value="O-" {% if donor.blood_group == "O-" %}selected{% endif %}>O-</option>
+                    <option value="A+" {% if donor.blood_group == "A+" %}selected{% endif %}>A+</option>
+                    <option value="A-" {% if donor.blood_group == "A-" %}selected{% endif %}>A-</option>
+                    <option value="B+" {% if donor.blood_group == "B+" %}selected{% endif %}>B+</option>
+                    <option value="B-" {% if donor.blood_group == "B-" %}selected{% endif %}>B-</option>
+                    <option value="AB+" {% if donor.blood_group == "AB+" %}selected{% endif %}>AB+</option>
+                    <option value="AB-" {% if donor.blood_group == "AB-" %}selected{% endif %}>AB-</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Contact Number</label>
+                <input type="text" name="phone" value="{{ donor.phone }}" required>
+            </div>
+            <div class="form-group">
+                <label>District Location</label>
+                <input type="text" name="location" value="{{ donor.location }}" required>
+            </div>
+            <div class="form-group">
+                <label>Area / Neighborhood</label>
+                <input type="text" name="area" value="{{ donor.area|default:'' }}">
+            </div>
+            {% endif %}
+            <div class="modal-actions" style="margin-top:20px;">
+                <button type="submit" class="btn-primary">Save Changes</button>
+                <button type="button" class="btn-secondary" onclick="document.getElementById('userProfileModal').style.display='none'">Cancel</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

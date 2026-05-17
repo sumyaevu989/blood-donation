@@ -1,0 +1,128 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Blood Donation System - Contact Us{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="contact-container">
+        <div class="page-header">
+            <h1>📞 Contact & Feedback</h1>
+            <p>Get in touch with us for any queries, blood donation requests, or share your valuable opinion</p>
+        </div>
+
+        <div class="contact-content">
+            <div class="contact-info">
+                <h2>Contact Information</h2>
+                
+                <div class="info-block">
+                    <h3>📞 Phone Numbers</h3>
+                    <ul>
+                        <li>General Inquiries: <strong>+1 (555) 123-4567</strong></li>
+                        <li>Emergency Blood Request: <strong>+1 (555) 123-4568</strong></li>
+                        <li>Donor Support: <strong>+1 (555) 123-4569</strong></li>
+                    </ul>
+                </div>
+
+                <div class="info-block">
+                    <h3>📧 Email Address</h3>
+                    <ul>
+                        <li>General: <strong>info@blooddonation.com</strong></li>
+                        <li>Emergency: <strong>emergency@blooddonation.com</strong></li>
+                        <li>Support: <strong>support@blooddonation.com</strong></li>
+                    </ul>
+                </div>
+
+                <div class="info-block">
+                    <h3>📍 Address</h3>
+                    <p>
+                        Blood Donation Center<br>
+                        123 Medical Street<br>
+                        Health City, HC 12345<br>
+                        IIUC
+                    </p>
+                </div>
+
+                <div class="info-block">
+                    <h3>⏰ Working Hours</h3>
+                    <ul>
+                        <li>Monday - Friday: 8:00 AM - 8:00 PM</li>
+                        <li>Saturday: 9:00 AM - 5:00 PM</li>
+                        <li>Sunday: 10:00 AM - 4:00 PM</li>
+                        <li><strong style="color: #e74c3c;">Emergency: 24/7 Available</strong></li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="contact-form">
+                <h2>Send us a Message / Share Opinion</h2>
+
+                <!-- Render success/error messages here -->
+                {% if messages %}
+                    {% for message in messages %}
+                        <div style="background-color: #d4edda; color: #155724; padding: 10px; margin-bottom: 20px; border-radius: 5px;">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+
+                <form method="POST" action="{% url 'contact' %}">
+                    {% csrf_token %}
+                    <div class="form-group">
+                        <label for="contactName">Full Name:</label>
+                        <input type="text" id="contactName" name="name" placeholder="Your name" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="contactEmail">Email:</label>
+                        <input type="email" id="contactEmail" name="email" placeholder="Your email" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="contactPhone">Phone:</label>
+                        <input type="tel" id="contactPhone" name="phone" placeholder="017XXXXXXXX" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="contactSubject">Subject:</label>
+                        <select id="contactSubject" name="subject" required>
+                            <option value="">Select Subject</option>
+                            <option value="Blood Request">Blood Request</option>
+                            <option value="Donation Inquiry">Donation Inquiry</option>
+                            <option value="Share Opinion / Feedback">Share Opinion / Feedback</option>
+                            <option value="General Inquiry">General Inquiry</option>
+                            <option value="Bug Report">Bug Report</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="contactBloodGroup">Blood Group Needed (if applicable):</label>
+                        <select id="contactBloodGroup" name="blood_group">
+                            <option value="">Not Applicable</option>
+                            <option value="O+">O+</option><option value="O-">O-</option>
+                            <option value="A+">A+</option><option value="A-">A-</option>
+                            <option value="B+">B+</option><option value="B-">B-</option>
+                            <option value="AB+">AB+</option><option value="AB-">AB-</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="contactMessage">Message / Feedback:</label>
+                        <textarea id="contactMessage" name="message" placeholder="Type your message, opinion, or feedback here..." rows="5" required></textarea>
+                    </div>
+
+                    <button type="submit" class="btn-submit">Submit Message</button>
+                </form>
+            </div>
+        </div>
+
+        <div class="faq-section">
+            <h2>❓ Frequently Asked Questions</h2>
+            <div class="faq-content">
+                ... (Same FAQs)
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

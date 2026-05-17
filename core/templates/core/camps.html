@@ -1,0 +1,44 @@
+{% extends 'core/base.html' %}
+{% block title %}Upcoming Blood Camps{% endblock %}
+{% block content %}
+<div class="container" style="max-width: 900px; margin-top: 50px;">
+    <h1 style="text-align: center; color: #d32f2f;">🏕️ Upcoming Blood Donation Camps</h1>
+    <p style="text-align: center; color: #555; margin-bottom: 40px;">Join our upcoming events to donate blood, earn points, and save lives.</p>
+    
+    <div style="display: grid; gap: 20px;">
+        {% for camp in camps %}
+        <div style="background: white; border-left: 5px solid #d32f2f; border-radius: 8px; padding: 25px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+            <div style="display: flex; justify-content: space-between; align-items: start;">
+                <div>
+                    <h2 style="margin-bottom: 10px; color: #333;">{{ camp.name }}</h2>
+                    <p style="color: #666; margin-bottom: 5px;"><strong>📅 Date:</strong> {{ camp.date }}</p>
+                    <p style="color: #666; margin-bottom: 15px;"><strong>📍 Location:</strong> {{ camp.location }}</p>
+                    <p style="color: #555; font-size: 0.95rem;">{{ camp.description }}</p>
+                </div>
+                <div>
+                    {% if user.is_authenticated and user.donor %}
+                        {% if user.donor in camp.participants.all %}
+                            <button style="background: #28a745; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: default; font-weight: bold;">Joined ✓</button>
+                        {% else %}
+                            <form action="{% url 'join_camp' camp.id %}" method="post">
+                                {% csrf_token %}
+                                <button type="submit" style="background: #d32f2f; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; transition: background 0.3s;">Join Camp</button>
+                            </form>
+                        {% endif %}
+                    {% else %}
+                        <a href="{% url 'login' %}" style="display: inline-block; background: #555; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: bold;">Login to Join</a>
+                    {% endif %}
+                </div>
+            </div>
+            <div style="margin-top: 20px; padding-top: 15px; border-top: 1px solid #eee; color: #888; font-size: 0.9rem;">
+                <strong>Participants:</strong> {{ camp.participants.count }} Donors expected
+            </div>
+        </div>
+        {% empty %}
+        <div style="text-align: center; color: #999; padding: 50px;">
+            <h3>No upcoming blood camps at the moment. Please check back later!</h3>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

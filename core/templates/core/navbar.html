@@ -1,0 +1,30 @@
+<nav class="navbar">
+    <div class="nav-container">
+        <div class="nav-logo">🩸 Blood Donation System</div>
+        <ul class="nav-menu">
+            <li><a href="{% url 'index' %}">Home</a></li>
+            <li><a href="{% url 'request_blood' %}">Request Blood</a></li>
+            <li><a href="{% url 'leaderboard' %}">Leaderboard</a></li>
+            <li><a href="{% url 'camps' %}">Blood Camps</a></li>
+            <li><a href="{% url 'about' %}">About Us</a></li>
+            <li><a href="{% url 'contact' %}">Contact Us</a></li>
+            {% if user.is_authenticated %}
+                {% if user.is_superuser %}
+                    <li><a href="{% url 'admin:index' %}">Dashboard</a></li>
+                {% else %}
+                    <li><a href="{% url 'dashboard' %}">Dashboard</a></li>
+                {% endif %}
+                <li>
+                    <form action="{% url 'logout' %}" method="post" style="display:inline; margin:0; padding:0;">
+                        {% csrf_token %}
+                        <button type="submit" class="nav-logout-btn">Logout ({{ user.username }})</button>
+                    </form>
+                </li>
+            {% else %}
+                <li><a href="{% url 'login' %}">Login</a></li>
+                <li><a href="{% url 'register' %}">Register</a></li>
+            {% endif %}
+            <li><button id="themeToggleBtn" class="theme-btn">🌙</button></li>
+        </ul>
+    </div>
+</nav>

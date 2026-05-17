@@ -1,0 +1,242 @@
+{
+  "applicationName": "Blood Donation System",
+  "version": "1.0",
+  "createdDate": "2026-04-04",
+  "description": "Complete blood donation management web application",
+  
+  "defaultAdminUser": {
+    "id": "admin",
+    "password": "admin123",
+    "name": "Admin User",
+    "email": "admin@blooddonation.com",
+    "phone": "01765131604",
+    "bloodGroup": "O+"
+  },
+
+  "sampleUserData": {
+    "id": "john_doe",
+    "password": "john@123",
+    "name": "John Doe",
+    "email": "john@example.com",
+    "phone": "9876543210",
+    "bloodGroup": "O+",
+    "registrationDate": "04/04/2026"
+  },
+
+  "contactMessageFormat": {
+    "id": 1712249400000,
+    "name": "Contact Person Name",
+    "email": "contact@example.com",
+    "phone": "1234567890",
+    "subject": "Blood Request",
+    "bloodGroup": "O+",
+    "message": "I need blood urgently for my family member",
+    "date": "04/04/2026, 10:30:45 AM",
+    "status": "pending"
+  },
+
+  "emergencyAlertFormat": {
+    "id": 1712249400000,
+    "bloodGroup": "AB-",
+    "message": "Emergency blood needed at City Hospital",
+    "timestamp": "04/04/2026, 10:30:45 AM",
+    "status": "active"
+  },
+
+  "bloodGroupStatistics": {
+    "O+": "38%",
+    "O-": "7%",
+    "A+": "34%",
+    "A-": "6%",
+    "B+": "9%",
+    "B-": "2%",
+    "AB+": "3%",
+    "AB-": "1%"
+  },
+
+  "bloodGroupCompatibility": {
+    "O+": {
+      "canDonateTo": ["O+", "A+", "B+", "AB+"],
+      "canReceiveFrom": ["O+"]
+    },
+    "O-": {
+      "canDonateTo": ["O+", "O-", "A+", "A-", "B+", "B-", "AB+", "AB-"],
+      "canReceiveFrom": ["O-"]
+    },
+    "A+": {
+      "canDonateTo": ["A+", "AB+"],
+      "canReceiveFrom": ["O+", "O-", "A+", "A-"]
+    },
+    "A-": {
+      "canDonateTo": ["A+", "A-", "AB+", "AB-"],
+      "canReceiveFrom": ["O-", "A-"]
+    },
+    "B+": {
+      "canDonateTo": ["B+", "AB+"],
+      "canReceiveFrom": ["O+", "O-", "B+", "B-"]
+    },
+    "B-": {
+      "canDonateTo": ["B+", "B-", "AB+", "AB-"],
+      "canReceiveFrom": ["O-", "B-"]
+    },
+    "AB+": {
+      "canDonateTo": ["AB+"],
+      "canReceiveFrom": ["O+", "O-", "A+", "A-", "B+", "B-", "AB+", "AB-"]
+    },
+    "AB-": {
+      "canDonateTo": ["AB+", "AB-"],
+      "canReceiveFrom": ["O-", "A-", "B-", "AB-"]
+    }
+  },
+
+  "eligibilityCriteria": {
+    "minimumAge": 18,
+    "maximumAge": 65,
+    "minimumWeight": "50 kg (110 lbs)",
+    "normalBloodPressure": "Required",
+    "minimumHemoglobin": "12.5 g/dL",
+    "timeBetweenDonations": "3-4 months",
+    "healthRequirements": [
+      "Good physical health",
+      "Good mental health",
+      "No contagious diseases",
+      "No recent surgery",
+      "Not pregnant"
+    ]
+  },
+
+  "apiEndpoints": {
+    "note": "Using LocalStorage - no backend required",
+    "functions": {
+      "login": "bloodDonationApp.login(id, password, phone)",
+      "register": "bloodDonationApp.register(name, id, email, phone, bloodGroup, password)",
+      "getAllUsers": "bloodDonationApp.getAllUsers()",
+      "searchDonorsByBloodGroup": "bloodDonationApp.searchDonorsByBloodGroup(bloodGroup)",
+      "searchDonorsByName": "bloodDonationApp.searchDonorsByName(name)",
+      "getBloodGroupStats": "bloodDonationApp.getBloodGroupStats()",
+      "saveContactMessage": "bloodDonationApp.saveContactMessage(name, email, phone, subject, bloodGroup, message)",
+      "getAllContactMessages": "bloodDonationApp.getAllContactMessages()",
+      "getTotalDonors": "bloodDonationApp.getTotalDonors()",
+      "getDonationStats": "bloodDonationApp.getDonationStats()",
+      "backupData": "bloodDonationApp.backupData()",
+      "restoreData": "bloodDonationApp.restoreData(backupData)",
+      "showAllData": "bloodDonationApp.showAllData()"
+    }
+  },
+
+  "localStorageKeys": {
+    "bloodDonationUsers": "Array of all registered users",
+    "currentUser": "Currently logged-in user details",
+    "contactMessages": "All contact form messages",
+    "emergencyAlerts": "Active emergency alerts"
+  },
+
+  "pageDescriptions": {
+    "index.html": {
+      "title": "Login Page",
+      "description": "User login with ID, Password, and Phone Number",
+      "public": true,
+      "requiresAuth": false
+    },
+    "register.html": {
+      "title": "Registration Page",
+      "description": "New user registration form",
+      "public": true,
+      "requiresAuth": false
+    },
+    "dashboard.html": {
+      "title": "Dashboard",
+      "description": "Main dashboard with user profile and statistics",
+      "public": false,
+      "requiresAuth": true
+    },
+    "search-donor.html": {
+      "title": "Search Donor",
+      "description": "Search for blood donors by blood group or name",
+      "public": false,
+      "requiresAuth": true
+    },
+    "about-us.html": {
+      "title": "About Us",
+      "description": "Information about blood donation benefits and eligibility",
+      "public": false,
+      "requiresAuth": true
+    },
+    "contact-us.html": {
+      "title": "Contact Us",
+      "description": "Contact information and blood request form",
+      "public": false,
+      "requiresAuth": true
+    }
+  },
+
+  "features": [
+    "User Authentication with ID, Password, Phone Number",
+    "User Registration with validation",
+    "Search donors by blood group",
+    "Search donors by name",
+    "View donor contact information",
+    "Blood group statistics",
+    "Contact form for messages",
+    "Emergency blood request",
+    "User profile management",
+    "Responsive design",
+    "LocalStorage database",
+    "Data backup and restore"
+  ],
+
+  "technologies": {
+    "frontend": [
+      "HTML5",
+      "CSS3",
+      "Vanilla JavaScript (ES6+)"
+    ],
+    "storage": "Browser LocalStorage",
+    "responsive": "Mobile-first design",
+    "compatibility": "All modern browsers"
+  },
+
+  "colorScheme": {
+    "primary": "#e74c3c (Red - Blood color)",
+    "secondary": "#3498db (Blue)",
+    "success": "#27ae60 (Green)",
+    "warning": "#f39c12 (Orange)",
+    "info": "#9b59b6 (Purple)",
+    "dark": "#2c3e50 (Dark Blue)",
+    "light": "#ecf0f1 (Lightgray)"
+  },
+
+  "testingCases": [
+    {
+      "testCase": "Login with default credentials",
+      "steps": [
+        "Open index.html",
+        "Enter ID: admin",
+        "Enter Password: admin123",
+        "Enter Phone: 01765131604",
+        "Click Login"
+      ],
+      "expectedResult": "Redirected to dashboard.html"
+    },
+    {
+      "testCase": "Register new user",
+      "steps": [
+        "Click 'Register here' on login page",
+        "Fill all registration fields",
+        "Enter matching passwords",
+        "Click Register"
+      ],
+      "expectedResult": "Success message and redirect to login"
+    },
+    {
+      "testCase": "Search for donors",
+      "steps": [
+        "Login to the system",
+        "Go to Search Donor",
+        "Select blood group",
+        "Click Search"
+      ],
+      "expectedResult": "Display list of donors with blood group"
+    }
+  ]
+}
