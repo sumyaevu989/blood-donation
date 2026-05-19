@@ -106,9 +106,16 @@
     </div>
 
     <div style="margin-top:18px;">
-        <h3 style="font-size:16px;margin-bottom:10px;color:#2C3E50;">Donors by Blood Group</h3>
-        <div style="width:100%;max-width:600px;background:#fff;padding:12px;border-radius:10px;border:1px solid #f1f3f5;box-shadow:0 6px 18px rgba(0,0,0,0.04)">
-            <canvas id="donorsChart" width="600" height="220"></canvas>
+        <h3 style="font-size:16px;margin-bottom:10px;color:#2C3E50;">Donors by Blood Group Overview</h3>
+        <div style="display:flex; flex-wrap:wrap; gap:20px; width:100%;">
+            <div style="flex:1; min-width:300px; background:#fff;padding:12px;border-radius:10px;border:1px solid #f1f3f5;box-shadow:0 6px 18px rgba(0,0,0,0.04)">
+                <h4 style="text-align:center;color:#546E7A;margin-top:0;margin-bottom:10px;font-size:14px;">Bar Chart</h4>
+                <canvas id="donorsBarChart" height="220"></canvas>
+            </div>
+            <div style="flex:1; min-width:300px; background:#fff;padding:12px;border-radius:10px;border:1px solid #f1f3f5;box-shadow:0 6px 18px rgba(0,0,0,0.04)">
+                <h4 style="text-align:center;color:#546E7A;margin-top:0;margin-bottom:10px;font-size:14px;">Pie Chart</h4>
+                <canvas id="donorsPieChart" height="220"></canvas>
+            </div>
         </div>
     </div>
 
@@ -117,18 +124,111 @@
         const donorsByGroup = {{ donors_by_group|default:"{}"|safe }};
         const labels = Object.keys(donorsByGroup);
         const data = labels.map(l => donorsByGroup[l]);
-        const ctx = document.getElementById('donorsChart').getContext('2d');
-        new Chart(ctx, {
+        
+        // Array of distinct bolder and darker colors for each blood group
+        const bgColors = [
+            'rgba(220, 38, 38, 1)',    // Deep Red 
+            'rgba(2, 132, 199, 1)',    // Deep Sky Blue
+            'rgba(217, 119, 6, 1)',    // Solid Orange-Yellow
+            'rgba(5, 150, 105, 1)',    // Emerald Green
+            'rgba(124, 58, 237, 1)',   // Deep Purple
+            'rgba(234, 88, 12, 1)',    // Deep Orange
+            'rgba(13, 148, 136, 1)',   // Deep Teal
+            'rgba(37, 99, 235, 1)'     // Solid Royal Blue
+        ];
+        const borderColors = bgColors;
+
+        // --- Render Bar Chart ---
+        const barCtx = document.getElementById('donorsBarChart').getContext('2d');
+        new Chart(barCtx, {
             type: 'bar',
             data: {
                 labels: labels,
                 datasets: [{
-                    label: 'Donors',
+                    label: 'Total Donors',
                     data: data,
-                    backgroundColor: 'rgba(211,47,47,0.7)'
+                    backgroundColor: bgColors.slice(0, labels.length),
+                    borderColor: borderColors.slice(0, labels.length),
+                    borderWidth: 1,
+                    borderRadius: 4,
+                    barPercentage: 0.7
                 }]
             },
-            options: {responsive:true,maintainAspectRatio:false}
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: '#2C3E50',
+                        padding: 12,
+                        titleFont: { size: 14 },
+                        bodyFont: { size: 14 }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: { stepSize: 1 },
+                        grid: { color: 'rgba(0,0,0,0.05)' }
+                    },
+                    x: {
+                        grid: { display: false }
+                    }
+                }
+            }
+        });
+
+        // --- Render Pie Chart ---
+        const pieCtx = document.getElementById('donorsPieChart').getContext('2d');
+        new Chart(pieCtx, {
+            type: 'pie',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Total Donors',
+                    data: data,
+                    backgroundColor: bgColors.slice(0, labels.length),
+                    borderColor: '#ffffff', // Clean white border between pie slices
+                    borderWidth: 2,
+                    hoverOffset: 6
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { 
+                        display: true, 
+                        position: 'right', // Legend on the right side for pie chart
+                        labels: {
+                            padding: 15,
+                            font: { size: 13, family: "'Helvetica Neue', Helvetica, Arial, sans-serif" }
+                        }
+                    },
+                    tooltip: {
+                        backgroundColor: '#2C3E50',
+                        padding: 12,
+                        titleFont: { size: 14 },
+                        bodyFont: { size: 14 },
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.label || '';
+                                if (label) {
+                                    label += ': ';
+                                }
+                                if (context.parsed !== null) {
+                                    label += context.parsed + ' Donors';
+                                }
+                                return label;
+                            }
+                        }
+                    }
+                },
+                layout: {
+                    padding: 10
+                }
+            }
         });
     </script>
 
