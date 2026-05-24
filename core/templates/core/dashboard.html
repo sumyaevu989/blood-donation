@@ -82,6 +82,9 @@
                 <button class="btn-action" onclick="window.location.href='{% url 'index' %}'">🔍 Search Donor</button>
                 <button class="btn-action" onclick="window.location.href='{% url 'request_blood' %}'">🚨 Request Blood</button>
                 <button class="btn-action" onclick="document.getElementById('userProfileModal').style.display='flex'">⚙️ Edit Profile</button>
+                {% if donor and donor.total_donations > 0 %}
+                <button class="btn-action" style="background-color:#4CAF50; color:white; border:none;" onclick="window.location.href='{% url 'generate_certificate' %}'">🎓 Download Certificate</button>
+                {% endif %}
             </div>
         </div>
     </div>

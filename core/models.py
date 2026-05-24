@@ -18,29 +18,27 @@ class Donor(models.Model):
     def is_eligible(self):
         if not self.last_donation_date:
             return True
-        return (timezone.now().date() - self.last_donation_date).days >= 90
+        return (timezone.now().date() - self.last_donation_date).days >= 120
 
     @property
     def next_eligible_date(self):
         if not self.last_donation_date:
             return timezone.now().date()
-        return self.last_donation_date + timedelta(days=90)
+        return self.last_donation_date + timedelta(days=120)
 
     @property
     def badge(self):
         if self.total_donations >= 10:
-            return "Hero 🦸‍♂️"
+            return "Life Saver 👑"
         elif self.total_donations >= 5:
-            return "Gold 🥇"
-        elif self.total_donations >= 3:
-            return "Silver 🥈"
+            return "Silver Donor 🥈"
         elif self.total_donations >= 1:
-            return "Bronze 🥉"
+            return "Bronze Donor 🩸"
         return "Beginner 🌱"
 
     @property
     def reward_points(self):
-        return self.total_donations * 50
+        return self.total_donations * 100
 
     def __str__(self):
         return f"{self.user.username} - {self.blood_group}"

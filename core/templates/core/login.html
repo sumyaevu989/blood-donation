@@ -22,6 +22,13 @@
 
             <form method="POST" action="{% url 'login' %}">
                 {% csrf_token %}
+                
+                {% if form.errors %}
+                <div style="color: red; margin-bottom: 15px; text-align: center;">
+                    <strong>Invalid Username or Password. Please try again.</strong>
+                </div>
+                {% endif %}
+
                 <div class="form-group">
                     <label for="id_username"><span class="label-icon">👤</span> User ID (Username)</label>
                     <input type="text" name="username" id="id_username" placeholder="Enter your username" required>

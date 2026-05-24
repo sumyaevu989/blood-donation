@@ -116,7 +116,7 @@ class CustomAdminSite(admin.AdminSite):
 
 
 # instantiate custom admin site and register models on it
-admin_site = CustomAdminSite(name='custom_admin')
+admin_site = CustomAdminSite(name='admin')
 
 
 class BloodRequestAdmin(admin.ModelAdmin):

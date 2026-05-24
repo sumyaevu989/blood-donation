@@ -13,6 +13,7 @@
                     <th style="padding: 10px 0;">Donor Name</th>
                     <th style="padding: 10px 0; text-align: center;">Blood Group</th>
                     <th style="padding: 10px 0; text-align: center;">Total Donations</th>
+                    <th style="padding: 10px 0; text-align: center;">Total Points</th>
                     <th style="padding: 10px 0; text-align: right;">Badge</th>
                 </tr>
             </thead>
@@ -23,6 +24,7 @@
                     <td style="padding: 15px 0; font-weight: bold; color: #333;">{{ top_donor.user.username }}</td>
                     <td style="padding: 15px 0; text-align: center; color: #d32f2f; font-weight: bold;">{{ top_donor.blood_group }}</td>
                     <td style="padding: 15px 0; text-align: center;">{{ top_donor.total_donations }}</td>
+                    <td style="padding: 15px 0; text-align: center; font-weight: bold; color: #4caf50;">{{ top_donor.reward_points }} pts</td>
                     <td style="padding: 15px 0; text-align: right; font-size: 1.5rem;">{{ top_donor.badge }}</td>
                 </tr>
                 {% empty %}

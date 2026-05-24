@@ -112,7 +112,7 @@
             </tbody>
         </table>
     </div>
-    <div class="results-count">{{ donors.count }} donors registered</div>
+    <div class="results-count" id="donorCount">{{ donors|length }} donors available (Eligible)</div>
 </div>
 {% endblock %}
 
@@ -129,8 +129,54 @@
         if (loc) params.append('loc', loc);
         if (area) params.append('area', area);
         
-        window.location.href = "{% url 'index' %}?" + params.toString();
+        // AJAX Fetch Call for Interactive No-Reload Search
+        fetch(`{% url 'index' %}?${params.toString()}`, {
+            method: 'GET',
+            headers: {
+                'x-requested-with': 'XMLHttpRequest'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            const tbody = document.querySelector('.results-table tbody');
+            tbody.innerHTML = ''; // clear current rows
+            const isAuthenticated = '{% if user.is_authenticated %}true{% else %}false{% endif %}';
+            
+            if (data.donors.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" class="no-search">No eligible donors found for this criteria.</td></tr>';
+            } else {
+                data.donors.forEach(donor => {
+                    const emailDisplay = isAuthenticated === 'true' ? donor.email : '*********@***.com';
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>${donor.name}</td>
+                        <td><span class="blood-badge">${donor.blood_group}</span></td>
+                        <td>${emailDisplay}</td>
+                        <td>${donor.phone}</td>
+                        <td>${donor.location}</td>
+                        <td>${donor.area}</td>
+                        <td>
+                            <button class="btn-contact" onclick="handleContactDjango('${donor.phone}', '${donor.name}', '${donor.email}', '${isAuthenticated}')">
+                                Contact
+                            </button>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            }
+            
+            // update count text
+            document.getElementById('donorCount').innerText = `${data.donors.length} donors available (Eligible)`;
+        })
+        .catch(err => {
+            console.error('Error fetching donors:', err);
+        });
     }
+
+    // Attach event listeners for dynamic search while typing/changing
+    document.getElementById('bloodGroup').addEventListener('change', searchDonors);
+    document.getElementById('locationSearch').addEventListener('input', searchDonors);
+    document.getElementById('areaSearch').addEventListener('input', searchDonors);
 
     function handleContactDjango(phone, name, email, isAuthenticated) {
         if (isAuthenticated === 'true') {

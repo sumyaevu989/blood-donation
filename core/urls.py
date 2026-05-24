@@ -16,4 +16,5 @@ urlpatterns = [
     path('camps/', views.camps, name='camps'),
     path('join-camp/<int:camp_id>/', views.join_camp, name='join_camp'),
     path('verify-request/<int:req_id>/', views.verify_otp, name='verify_otp'),
+    path('certificate/', views.generate_certificate, name='generate_certificate'),
 ]

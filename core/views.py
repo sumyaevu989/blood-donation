@@ -3,9 +3,14 @@ from django.contrib.auth import login, logout, authenticate
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.contrib.auth.models import User
+from django.http import HttpResponse
 from .models import Donor, ContactMessage, BloodRequest, BloodBankInventory, BloodCamp
 from .forms import DonorRegistrationForm
 import random
+import io
+from reportlab.pdfgen import canvas
+from reportlab.lib.pagesizes import letter
+from reportlab.lib import colors
 
 def leaderboard(request):
     top_donors = Donor.objects.order_by('-total_donations')[:10]
@@ -88,6 +93,8 @@ def request_blood_view(request):
     requests = BloodRequest.objects.filter(is_verified=True).order_by('-created_at')
     return render(request, 'core/request_blood.html', {'requests': requests})
 
+from django.http import JsonResponse
+
 def index(request):
     donors = Donor.objects.all()
     inventory = BloodBankInventory.objects.all()
@@ -102,6 +109,22 @@ def index(request):
         donors = donors.filter(location__icontains=location)
     if area:
         donors = donors.filter(area__icontains=area)
+
+    # Cool-down filtering (only send eligible donors to context/ajax)
+    donors = [d for d in donors if d.is_eligible]
+    
+    if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        donors_data = []
+        for d in donors:
+            donors_data.append({
+                'name': d.user.username,
+                'blood_group': d.blood_group,
+                'phone': d.phone,
+                'location': d.location,
+                'area': d.area if d.area else '-',
+                'email': d.user.email
+            })
+        return JsonResponse({'donors': donors_data})
         
     return render(request, 'core/index.html', {'donors': donors, 'inventory': inventory})
 
@@ -164,3 +187,58 @@ def update_profile(request):
             
         messages.success(request, 'Profile updated successfully!')
     return redirect('dashboard')
+
+@login_required
+def generate_certificate(request):
+    donor = getattr(request.user, 'donor', None)
+    if not donor or donor.total_donations < 1:
+        messages.error(request, 'You need to donate at least once to get a certificate.')
+        return redirect('dashboard')
+
+    buffer = io.BytesBytesIO() if hasattr(io, 'BytesBytesIO') else io.BytesIO()
+    p = canvas.Canvas(buffer, pagesize=letter)
+    width, height = letter
+    
+    # Draw border
+    p.setStrokeColor(colors.darkred)
+    p.setLineWidth(4)
+    p.rect(30, 30, width - 60, height - 60)
+    p.setStrokeColor(colors.gold)
+    p.setLineWidth(2)
+    p.rect(34, 34, width - 68, height - 68)
+
+    # Title
+    p.setFont("Helvetica-Bold", 32)
+    p.setFillColor(colors.darkred)
+    p.drawCentredString(width / 2.0, height - 150, "Certificate of Appreciation")
+
+    # Subtitle
+    p.setFont("Helvetica", 18)
+    p.setFillColor(colors.black)
+    p.drawCentredString(width / 2.0, height - 200, "This certificate is proudly presented to")
+
+    # Name
+    p.setFont("Helvetica-Bold", 28)
+    p.setFillColor(colors.blue)
+    p.drawCentredString(width / 2.0, height - 260, request.user.get_full_name() or request.user.username)
+
+    # Details
+    p.setFont("Helvetica", 16)
+    p.setFillColor(colors.black)
+    p.drawCentredString(width / 2.0, height - 320, f"For proudly donating blood {donor.total_donations} times.")
+    p.drawCentredString(width / 2.0, height - 350, f"Current Badge: {donor.badge}")
+    p.drawCentredString(width / 2.0, height - 380, "Your contribution has helped save precious lives.")
+
+    # Footer
+    p.setFont("Helvetica-Bold", 14)
+    p.drawCentredString(width / 2.0, height - 500, "Blood Donation System")
+    p.setFont("Helvetica", 12)
+    p.drawCentredString(width / 2.0, height - 520, "Official Digital Certificate")
+
+    p.showPage()
+    p.save()
+
+    buffer.seek(0)
+    response = HttpResponse(buffer, content_type='application/pdf')
+    response['Content-Disposition'] = f'attachment; filename="Blood_Donation_Certificate_{request.user.username}.pdf"'
+    return response
