@@ -4,7 +4,14 @@ from .models import Donor
 
 class DonorRegistrationForm(forms.ModelForm):
     password = forms.CharField(widget=forms.PasswordInput)
-    phone = forms.CharField(max_length=20)
+    phone = forms.CharField(max_length=20, min_length=11)
+    
+    def clean_phone(self):
+        phone = self.cleaned_data.get('phone')
+        if len(phone) != 11 or not phone.isdigit():
+            raise forms.ValidationError("Phone number must be exactly 11 digits.")
+        return phone
+
     blood_group = forms.CharField(max_length=5)
     location = forms.CharField(max_length=100)
     area = forms.CharField(max_length=100, required=False)

@@ -6,6 +6,51 @@
 
 {% block content %}
 <div class="container search-container">
+    <section class="home-slider" aria-label="Blood donation banner slideshow">
+        <div class="home-slider-track">
+            <article class="home-slide is-active" style="background-image: linear-gradient(135deg, rgba(12, 18, 28, 0.45), rgba(12, 18, 28, 0.15)), url('{% static 'images/banner-1.png' %}');">
+                <a href="{% url 'camps' %}" class="home-slide-link" aria-label="Open blood camps">
+                    <div class="home-slide-content">
+                        <span class="home-slide-kicker">Save Lives Today</span>
+                        <h2>Donate blood, inspire hope.</h2>
+                        <p>Join a community that turns small actions into life-saving impact.</p>
+                        <span class="home-slide-cta">Explore Blood Camps</span>
+                    </div>
+                </a>
+            </article>
+
+            <article class="home-slide" style="background-image: linear-gradient(135deg, rgba(12, 18, 28, 0.45), rgba(12, 18, 28, 0.15)), url('{% static 'images/banner-2.jpg' %}');">
+                <a href="{% url 'camps' %}" class="home-slide-link" aria-label="Open blood camps">
+                    <div class="home-slide-content">
+                        <span class="home-slide-kicker">World Blood Donor Day</span>
+                        <h2>Every donor matters.</h2>
+                        <p>Your donation can help a patient, a family, and an entire future.</p>
+                        <span class="home-slide-cta">Explore Blood Camps</span>
+                    </div>
+                </a>
+            </article>
+
+            <article class="home-slide" style="background-image: linear-gradient(135deg, rgba(12, 18, 28, 0.45), rgba(12, 18, 28, 0.15)), url('{% static 'images/banner-3.jpg' %}');">
+                <a href="{% url 'camps' %}" class="home-slide-link" aria-label="Open blood camps">
+                    <div class="home-slide-content">
+                        <span class="home-slide-kicker">Be the Difference</span>
+                        <h2>One donation. Many lives.</h2>
+                        <p>Check donor availability and connect with the right person faster.</p>
+                        <span class="home-slide-cta">Explore Blood Camps</span>
+                    </div>
+                </a>
+            </article>
+        </div>
+
+        <button type="button" class="home-slider-btn home-slider-prev" id="homeSliderPrev" aria-label="Previous banner">‹</button>
+        <button type="button" class="home-slider-btn home-slider-next" id="homeSliderNext" aria-label="Next banner">›</button>
+
+        <div class="home-slider-dots" id="homeSliderDots" aria-label="Banner navigation">
+            <button type="button" class="is-active" aria-label="Show banner 1"></button>
+            <button type="button" aria-label="Show banner 2"></button>
+            <button type="button" aria-label="Show banner 3"></button>
+        </div>
+    </section>
     
     <!-- Blood Bank Inventory Summary -->
     {% if inventory %}
@@ -118,6 +163,61 @@
 
 {% block extra_js %}
 <script>
+    const homeSlides = document.querySelectorAll('.home-slide');
+    const homeDots = document.querySelectorAll('#homeSliderDots button');
+    const homePrev = document.getElementById('homeSliderPrev');
+    const homeNext = document.getElementById('homeSliderNext');
+    let homeSlideIndex = 0;
+    let homeSlideTimer = null;
+
+    function showHomeSlide(index) {
+        homeSlideIndex = (index + homeSlides.length) % homeSlides.length;
+        homeSlides.forEach((slide, slideIndex) => {
+            slide.classList.toggle('is-active', slideIndex === homeSlideIndex);
+        });
+        homeDots.forEach((dot, dotIndex) => {
+            dot.classList.toggle('is-active', dotIndex === homeSlideIndex);
+        });
+    }
+
+    function startHomeSlider() {
+        stopHomeSlider();
+        homeSlideTimer = setInterval(() => showHomeSlide(homeSlideIndex + 1), 4000);
+    }
+
+    function stopHomeSlider() {
+        if (homeSlideTimer) {
+            clearInterval(homeSlideTimer);
+            homeSlideTimer = null;
+        }
+    }
+
+    if (homeSlides.length > 0) {
+        homePrev.addEventListener('click', () => {
+            showHomeSlide(homeSlideIndex - 1);
+            startHomeSlider();
+        });
+
+        homeNext.addEventListener('click', () => {
+            showHomeSlide(homeSlideIndex + 1);
+            startHomeSlider();
+        });
+
+        homeDots.forEach((dot, dotIndex) => {
+            dot.addEventListener('click', () => {
+                showHomeSlide(dotIndex);
+                startHomeSlider();
+            });
+        });
+
+        const homeSlider = document.querySelector('.home-slider');
+        homeSlider.addEventListener('mouseenter', stopHomeSlider);
+        homeSlider.addEventListener('mouseleave', startHomeSlider);
+
+        showHomeSlide(0);
+        startHomeSlider();
+    }
+
     function searchDonors() {
         const bg = document.getElementById('bloodGroup').value;
         const loc = document.getElementById('locationSearch').value;

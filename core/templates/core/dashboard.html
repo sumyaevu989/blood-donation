@@ -7,8 +7,18 @@
 {% block content %}
 <div class="dashboard-container">
     <div class="welcome-section" style="background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);">
-        <h1 style="font-weight: 800; font-size: 42px; text-transform: uppercase;">Dashboard</h1>
-        <p style="font-size: 20px;">Welcome back, {{ user.first_name }}!</p>
+        <div class="welcome-section-inner">
+            <div>
+                <h1 style="font-weight: 800; font-size: 42px; text-transform: uppercase;">Dashboard</h1>
+                <p style="font-size: 20px;">Welcome back, {{ user.first_name }}!</p>
+            </div>
+            <div>
+                <form action="{% url 'logout' %}" method="post" style="margin: 0;">
+                    {% csrf_token %}
+                    <button type="submit" class="dashboard-logout-btn">Logout</button>
+                </form>
+            </div>
+        </div>
     </div>
 
     <!-- Admin Stats Cards -->
@@ -120,7 +130,7 @@
             </div>
             <div class="form-group">
                 <label>Contact Number</label>
-                <input type="text" name="phone" value="{{ donor.phone }}" required>
+                <input type="text" name="phone" value="{{ donor.phone }}" pattern="\d{11}" title="Phone number must be exactly 11 digits" required>
             </div>
             <div class="form-group">
                 <label>District Location</label>

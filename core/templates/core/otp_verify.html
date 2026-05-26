@@ -1,17 +1,19 @@
 {% extends 'core/base.html' %}
 {% block title %}Verify Request (OTP){% endblock %}
+{% block body_class %}otp-page{% endblock %}
 {% block content %}
-<div class="container" style="max-width: 500px; margin-top: 50px;">
-    <div style="background: white; border-radius: 10px; padding: 40px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); text-align: center;">
-        <h2 style="color: #333; margin-bottom: 20px;">🛡️ Verify Request (OTP)</h2>
-        <p style="color: #666; margin-bottom: 30px;">An OTP has been generated to verify your contact number for patient <strong>{{ req.patient_name }}</strong>.</p>
+<div class="container page-shell otp-shell">
+    <div class="otp-card glass-panel">
+        <div class="otp-badge">Secure verification</div>
+        <h2>🛡️ Verify Request (OTP)</h2>
+        <p>An OTP has been generated to verify your contact number for patient <strong>{{ req.patient_name }}</strong>.</p>
         
         <form method="post">
             {% csrf_token %}
-            <div style="margin-bottom: 20px;">
-                <input type="text" name="otp" placeholder="Enter 6-digit OTP" style="width: 100%; padding: 15px; font-size: 1.2rem; text-align: center; border: 1px solid #ccc; border-radius: 5px; letter-spacing: 5px;" required maxlength="6">
+            <div class="otp-input-wrap">
+                <input type="text" name="otp" placeholder="Enter 6-digit OTP" required maxlength="6">
             </div>
-            <button type="submit" style="width: 100%; padding: 15px; background: #28a745; color: white; border: none; border-radius: 5px; font-size: 1.1rem; cursor: pointer; transition: background 0.3s; font-weight: bold;">
+            <button type="submit" class="btn-submit otp-submit">
                 Verify & Publish
             </button>
         </form>

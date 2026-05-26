@@ -2,10 +2,19 @@
 {% load static %}
 
 {% block title %}Blood Donation System - About Us{% endblock %}
+{% block body_class %}about-page{% endblock %}
 
 {% block content %}
-<div class="container">
-    <div class="about-container">
+<div class="container page-shell about-shell">
+    <section class="page-hero soft-hero">
+        <div class="page-hero-copy">
+            <span class="page-kicker">About Us</span>
+            <h1>Why blood donation matters</h1>
+            <p>Learn how the platform helps donors, hospitals, and families connect faster in one polished system.</p>
+        </div>
+    </section>
+
+    <div class="about-container glass-panel">
         <div class="page-header">
             <h1>ℹ️ About Blood Donation</h1>
             <p>Learn about the importance of blood donation and how you can help save lives</p>
@@ -95,7 +104,7 @@
     </div>
 </div>
 
-<footer class="footer">
+<footer class="footer footer-compact">
     <p>&copy; 2026 Blood Donation System. All rights reserved. | Saving Lives, One Drop at a Time</p>
 </footer>
 {% endblock %}

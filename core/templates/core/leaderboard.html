@@ -1,35 +1,41 @@
 {% extends 'core/base.html' %}
 {% block title %}Leaderboard{% endblock %}
+{% block body_class %}leaderboard-page{% endblock %}
 {% block content %}
-<div class="container" style="max-width: 800px; margin-top: 50px;">
-    <h1 style="text-align: center; color: #d32f2f;">🏆 Top Blood Donors</h1>
-    <p style="text-align: center; color: #555;">Meet the heroes saving lives every day!</p>
-    
-    <div style="background: white; border-radius: 10px; padding: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
-        <table style="width: 100%; border-collapse: collapse; text-align: left;">
+<div class="container page-shell leaderboard-shell">
+    <section class="page-hero leaderboard-hero">
+        <div class="page-hero-copy">
+            <span class="page-kicker">Hall of Heroes</span>
+            <h1>Top Blood Donors</h1>
+            <p>Celebrate the donors creating the biggest impact across the community.</p>
+        </div>
+    </section>
+
+    <div class="glass-panel leaderboard-card">
+        <table class="leaderboard-table">
             <thead>
-                <tr style="border-bottom: 2px solid #eee;">
-                    <th style="padding: 10px 0;">Rank</th>
-                    <th style="padding: 10px 0;">Donor Name</th>
-                    <th style="padding: 10px 0; text-align: center;">Blood Group</th>
-                    <th style="padding: 10px 0; text-align: center;">Total Donations</th>
-                    <th style="padding: 10px 0; text-align: center;">Total Points</th>
-                    <th style="padding: 10px 0; text-align: right;">Badge</th>
+                <tr>
+                    <th>Rank</th>
+                    <th>Donor Name</th>
+                    <th class="center">Blood Group</th>
+                    <th class="center">Total Donations</th>
+                    <th class="center">Total Points</th>
+                    <th class="right">Badge</th>
                 </tr>
             </thead>
             <tbody>
                 {% for top_donor in top_donors %}
-                <tr style="border-bottom: 1px solid #eee;">
-                    <td style="padding: 15px 0;"><h1>#{{ forloop.counter }}</h1></td>
-                    <td style="padding: 15px 0; font-weight: bold; color: #333;">{{ top_donor.user.username }}</td>
-                    <td style="padding: 15px 0; text-align: center; color: #d32f2f; font-weight: bold;">{{ top_donor.blood_group }}</td>
-                    <td style="padding: 15px 0; text-align: center;">{{ top_donor.total_donations }}</td>
-                    <td style="padding: 15px 0; text-align: center; font-weight: bold; color: #4caf50;">{{ top_donor.reward_points }} pts</td>
-                    <td style="padding: 15px 0; text-align: right; font-size: 1.5rem;">{{ top_donor.badge }}</td>
+                <tr>
+                    <td><span class="rank-pill">#{{ forloop.counter }}</span></td>
+                    <td class="strong-cell">{{ top_donor.user.username }}</td>
+                    <td class="center accent-cell">{{ top_donor.blood_group }}</td>
+                    <td class="center">{{ top_donor.total_donations }}</td>
+                    <td class="center success-cell">{{ top_donor.reward_points }} pts</td>
+                    <td class="right badge-cell">{{ top_donor.badge }}</td>
                 </tr>
                 {% empty %}
                 <tr>
-                    <td colspan="5" style="padding: 15px 0; text-align: center;">No donors found.</td>
+                    <td colspan="6" class="empty-row">No donors found.</td>
                 </tr>
                 {% endfor %}
             </tbody>

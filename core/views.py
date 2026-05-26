@@ -173,6 +173,13 @@ def dashboard(request):
 def update_profile(request):
     if request.method == 'POST':
         user = request.user
+        phone = request.POST.get('phone')
+        
+        # Backend validation for phone number length
+        if not phone.isdigit() or len(phone) != 11:
+            messages.error(request, 'Phone number must be exactly 11 digits.')
+            return redirect('dashboard')
+            
         user.first_name = request.POST.get('first_name')
         user.email = request.POST.get('email')
         user.save()

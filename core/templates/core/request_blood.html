@@ -2,9 +2,18 @@
 {% load static %}
 
 {% block title %}Blood Donation System - Request Blood{% endblock %}
+{% block body_class %}request-page{% endblock %}
 
 {% block content %}
-<div class="container">
+<div class="container page-shell request-shell">
+    <section class="page-hero soft-hero">
+        <div class="page-hero-copy">
+            <span class="page-kicker">Emergency Support</span>
+            <h1>Request blood with clarity and urgency</h1>
+            <p>Modernized request and listing panels keep critical information visible and easy to act on.</p>
+        </div>
+    </section>
+
     <div class="page-header">
         <h1>🚨 Emergency Blood Request</h1>
         <p>Submit an urgent request or view those currently in need of blood.</p>
@@ -13,25 +22,25 @@
     <!-- Render success messages -->
     {% if messages %}
         {% for message in messages %}
-            <div style="background-color: #d4edda; color: #155724; padding: 15px; margin-bottom: 20px; border-radius: 8px; font-weight: 600;">
+            <div class="flash-message flash-success" style="margin-bottom: 20px;">
                 {{ message }}
             </div>
         {% endfor %}
     {% endif %}
 
-    <div style="display: flex; gap: 30px; flex-wrap: wrap;">
+    <div class="request-grid">
         
         <!-- Form to Request Blood -->
-        <div class="search-filters-card" style="flex: 1; min-width: 300px;">
+        <div class="search-filters-card request-card">
             <h2>Submit a Request</h2>
             <form method="POST" action="{% url 'request_blood' %}">
                 {% csrf_token %}
-                <div class="form-group" style="margin-bottom:15px;">
+                <div class="form-group request-field">
                     <label>Patient Name:</label>
                     <input type="text" name="patient_name" placeholder="Name of patient" required style="width:100%; padding:10px; border-radius:8px; border:1px solid #ddd;">
                 </div>
 
-                <div class="form-group" style="margin-bottom:15px;">
+                <div class="form-group request-field">
                     <label>Blood Group Needed:</label>
                     <select name="blood_group" required style="width:100%; padding:10px; border-radius:8px; border:1px solid #ddd;">
                         <option value="">Select Blood Group</option>
@@ -42,17 +51,17 @@
                     </select>
                 </div>
 
-                <div class="form-group" style="margin-bottom:15px;">
+                <div class="form-group request-field">
                     <label>Hospital/Location:</label>
                     <input type="text" name="hospital" placeholder="Hospital name & Area" required style="width:100%; padding:10px; border-radius:8px; border:1px solid #ddd;">
                 </div>
 
-                <div class="form-group" style="margin-bottom:15px;">
+                <div class="form-group request-field">
                     <label>Contact Number:</label>
                     <input type="tel" name="contact_number" placeholder="Phone number for donors to reach you" required style="width:100%; padding:10px; border-radius:8px; border:1px solid #ddd;">
                 </div>
 
-                <div class="form-group" style="margin-bottom:20px;">
+                <div class="form-group request-field">
                     <label>Urgency Level:</label>
                     <select name="urgency" required style="width:100%; padding:10px; border-radius:8px; border:1px solid #ddd;">
                         <option value="Urgent (Today)">Urgent (Today)</option>
@@ -67,37 +76,43 @@
         </div>
 
         <!-- List of Active Requests -->
-        <div class="summary-card" style="flex: 2; min-width: 400px; max-height: 550px; overflow-y: auto;">
+        <div class="summary-card request-list-card">
             <h2>Recent Blood Requests</h2>
-            <table class="results-table">
-                <thead>
-                    <tr>
-                        <th>Patient</th>
-                        <th>Blood Group</th>
-                        <th>Hospital</th>
-                        <th>Contact</th>
-                        <th>Urgency</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for req in requests %}
-                    <tr>
-                        <td><strong>{{ req.patient_name }}</strong></td>
-                        <td><span class="blood-badge" style="background:#D32F2F;">{{ req.blood_group }}</span></td>
-                        <td>{{ req.hospital }}</td>
-                        <td><strong>{{ req.contact_number }}</strong></td>
-                        <td>
-                            <span style="color:#D32F2F; font-weight:bold;">{{ req.urgency }}</span><br>
-                            <a href="https://api.whatsapp.com/send?text=Urgent Blood Required! {{ req.blood_group }} blood needed at {{ req.hospital }} for {{ req.patient_name }}. Contact: {{ req.contact_number }}" target="_blank" style="display: inline-block; background: #25D366; color: white; padding: 3px 6px; border-radius: 4px; text-decoration: none; font-size: 0.75em; margin-top: 5px;">📱 Share WA</a>
-                        </td>
-                    </tr>
-                    {% empty %}
-                    <tr>
-                        <td colspan="5" style="text-align:center; padding:20px;">No active blood requests at this time.</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+
+            <div class="request-list-grid">
+                {% for req in requests %}
+                <article class="request-item">
+                    <div class="request-top">
+                        <div class="patient-name">{{ req.patient_name }}</div>
+                        <div class="blood-badge" aria-hidden="true">{{ req.blood_group }}</div>
+                    </div>
+
+                    <div class="request-meta">
+                        <div class="meta-row"><strong>Hospital:</strong> {{ req.hospital }}</div>
+                        <div class="meta-row"><strong>Contact:</strong> <a href="tel:{{ req.contact_number }}">{{ req.contact_number }}</a></div>
+                        <div class="meta-row"><strong>When:</strong> {{ req.created_at|date:"M d, H:i" }}</div>
+                    </div>
+
+                    <div class="request-actions">
+                        <div class="urgency">{{ req.urgency }}</div>
+                        {% with wa_msg='Urgent Blood Required! '|add:req.blood_group|add:' blood needed at '|add:req.hospital|add:' for '|add:req.patient_name|add:'. Contact: '|add:req.contact_number %}
+                        <a class="share-btn share-wa" href="https://api.whatsapp.com/send?text={{ wa_msg|urlencode }}" target="_blank" rel="noopener noreferrer" aria-label="Share this request on WhatsApp" title="Share on WhatsApp">
+                            <!-- WhatsApp icon -->
+                            <span class="wa-icon" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" focusable="false">
+                                    <path d="M20.52 3.48A11.9 11.9 0 0 0 12 0C5.373 0 .017 5.356 0 12c0 2.116.558 4.186 1.616 6.02L0 24l6.15-1.605A11.94 11.94 0 0 0 12 24c6.627 0 12-5.373 12-12 0-3.208-1.25-6.215-3.48-8.52z" fill="#25D366"/>
+                                    <path d="M17.6 14.1c-.3-.15-1.76-.86-2.03-.96-.27-.1-.47-.15-.67.15-.2.3-.78.96-.96 1.15-.18.2-.36.22-.66.07-.3-.15-1.26-.46-2.4-1.48-.89-.79-1.48-1.77-1.66-2.07-.18-.3-.02-.46.13-.61.13-.13.3-.36.45-.54.15-.18.2-.3.3-.5.1-.2 0-.38-.02-.53-.02-.15-.67-1.6-.92-2.2-.24-.58-.48-.5-.67-.51l-.57-.01c-.2 0-.52.07-.8.32-.28.25-1.06 1.04-1.06 2.52 0 1.48 1.09 2.92 1.25 3.12.16.2 2.16 3.42 5.24 4.8 3.08 1.38 3.08.92 3.63.86.55-.07 1.76-.72 2.01-1.41.25-.69.25-1.28.17-1.4-.08-.12-.28-.18-.58-.33z" fill="#fff"/>
+                                </svg>
+                            </span>
+                            <span class="share-label">Share WA</span>
+                        </a>
+                        {% endwith %}
+                    </div>
+                </article>
+                {% empty %}
+                <div class="empty-state">No active blood requests at this time.</div>
+                {% endfor %}
+            </div>
         </div>
 
     </div>

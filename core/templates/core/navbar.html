@@ -9,16 +9,10 @@
             <li><a href="{% url 'about' %}">About Us</a></li>
             <li><a href="{% url 'contact' %}">Contact Us</a></li>
             {% if user.is_authenticated %}
-                {% if user.is_superuser %}
-                    <li><a href="{% url 'admin:index' %}">Dashboard</a></li>
-                {% else %}
-                    <li><a href="{% url 'dashboard' %}">Dashboard</a></li>
-                {% endif %}
                 <li>
-                    <form action="{% url 'logout' %}" method="post" style="display:inline; margin:0; padding:0;">
-                        {% csrf_token %}
-                        <button type="submit" class="nav-logout-btn">Logout ({{ user.username }})</button>
-                    </form>
+                    <a href="{% url 'dashboard' %}" class="nav-profile-link" title="Open profile dashboard" aria-label="Open profile dashboard">
+                        <span class="nav-profile-icon">👤</span>
+                    </a>
                 </li>
             {% else %}
                 <li><a href="{% url 'login' %}">Login</a></li>

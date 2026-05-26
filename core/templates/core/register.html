@@ -11,21 +11,47 @@
     <div class="hero-blob blob3"></div>
 </div>
 
-<div class="register-page-container">
-    <div class="register-header">
-        <h1 class="main-title">🩸 Blood Donation System</h1>
-        <p class="main-subtitle">Join Our Life-Saving Community</p>
-    </div>
+<div class="register-page-container auth-page-container">
+    <section class="auth-shell auth-register-shell">
+        <div class="auth-hero">
+            <span class="auth-badge">Join the network</span>
+            <h1 class="main-title">🩸 Blood Donation System</h1>
+            <p class="main-subtitle">Create a donor profile and become part of a lifesaving community.</p>
 
-    <div class="register-wrapper">
-        <div class="register-box">
-            <div class="register-header-box">
+            <div class="auth-feature-list">
+                <div class="auth-feature">
+                    <span>🌍</span>
+                    <div>
+                        <strong>Find nearby camps</strong>
+                        <p>See donation events and join quickly.</p>
+                    </div>
+                </div>
+                <div class="auth-feature">
+                    <span>📱</span>
+                    <div>
+                        <strong>Verified contact</strong>
+                        <p>Keep your phone number ready for alerts.</p>
+                    </div>
+                </div>
+                <div class="auth-feature">
+                    <span>🏆</span>
+                    <div>
+                        <strong>Track impact</strong>
+                        <p>Earn points and celebrate every donation.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="auth-card register-box">
+            <div class="auth-card-header">
                 <h2>Create Your Account</h2>
-                <p>Become a blood donor and save lives</p>
+                <p>Fill in your details to start saving lives.</p>
             </div>
 
-            <form method="POST">
+            <form method="POST" class="auth-form">
                 {% csrf_token %}
+
                 <div class="form-row-2">
                     <div class="form-group">
                         <label><span class="label-icon">👤</span> Full Name</label>
@@ -51,7 +77,7 @@
                 <div class="form-row-2">
                     <div class="form-group">
                         <label><span class="label-icon">📱</span> Phone</label>
-                        <input type="tel" name="phone" placeholder="Phone Number" required>
+                        <input type="tel" name="phone" placeholder="11 Digit Phone Number" pattern="\d{11}" title="Phone number must be exactly 11 digits" required>
                     </div>
                     <div class="form-group">
                         <label><span class="label-icon">🩸</span> Blood Group</label>
@@ -81,8 +107,9 @@
                     <span class="btn-arrow">→</span>
                 </button>
             </form>
-            <p style="text-align: center; margin-top: 15px;">Already registered? <a href="{% url 'login' %}">Login here</a></p>
+
+            <p class="auth-switch-line">Already registered? <a href="{% url 'login' %}">Login here</a></p>
         </div>
-    </div>
+    </section>
 </div>
 {% endblock %}

@@ -1,44 +1,175 @@
 {% extends 'core/base.html' %}
 {% block title %}Upcoming Blood Camps{% endblock %}
+{% block body_class %}camp-environment-page{% endblock %}
 {% block content %}
-<div class="container" style="max-width: 900px; margin-top: 50px;">
-    <h1 style="text-align: center; color: #d32f2f;">🏕️ Upcoming Blood Donation Camps</h1>
-    <p style="text-align: center; color: #555; margin-bottom: 40px;">Join our upcoming events to donate blood, earn points, and save lives.</p>
-    
-    <div style="display: grid; gap: 20px;">
-        {% for camp in camps %}
-        <div style="background: white; border-left: 5px solid #d32f2f; border-radius: 8px; padding: 25px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
-            <div style="display: flex; justify-content: space-between; align-items: start;">
-                <div>
-                    <h2 style="margin-bottom: 10px; color: #333;">{{ camp.name }}</h2>
-                    <p style="color: #666; margin-bottom: 5px;"><strong>📅 Date:</strong> {{ camp.date }}</p>
-                    <p style="color: #666; margin-bottom: 15px;"><strong>📍 Location:</strong> {{ camp.location }}</p>
-                    <p style="color: #555; font-size: 0.95rem;">{{ camp.description }}</p>
+<div class="camp-page-shell">
+    <section class="camp-hero">
+        <div class="camp-hero-inner">
+            <div>
+                <p style="text-transform: uppercase; letter-spacing: 0.12em; font-size: 12px; font-weight: 700; margin-bottom: 12px; color: rgba(255,255,255,0.85);">Community Blood Drive</p>
+                <h1>Upcoming Blood Donation Camps</h1>
+                <p>Step into a warmer, community-driven atmosphere where every camp feels like a mission to save lives. Join events, earn points, and connect with donors in one place.</p>
+                <div class="camp-hero-actions">
+                    <button type="button" class="camp-hero-btn" onclick="document.getElementById('campSearch').focus()">Find a Camp</button>
+                    <a href="{% url 'index' %}" class="camp-hero-link">Back to Donors</a>
                 </div>
+            </div>
+            <div class="camp-hero-stats">
+                <div class="camp-stat">
+                    <strong>{{ camps|length }}</strong>
+                    <span>Upcoming camps</span>
+                </div>
+                <div class="camp-stat">
+                    <strong>24/7</strong>
+                    <span>Donor impact</span>
+                </div>
+                <div class="camp-stat">
+                    <strong>+1</strong>
+                    <span>Life saved</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="camp-toolbar">
+        <div class="camp-search-box">
+            <label for="campSearch">Search camps</label>
+            <input type="text" id="campSearch" placeholder="Search by camp name, location, or description">
+        </div>
+        <div class="camp-toolbar-summary">
+            <span class="camp-toolbar-pill">Live filter</span>
+            <span id="campVisibleCount">{{ camps|length }} visible</span>
+        </div>
+    </section>
+
+    <div class="camp-list">
+        {% for camp in camps %}
+        <div class="camp-card" data-camp-name="{{ camp.name|lower }}" data-camp-location="{{ camp.location|lower }}" data-camp-description="{{ camp.description|lower }}">
+            <div class="camp-card-grid">
                 <div>
+                    <h2>{{ camp.name }}</h2>
+                    <div class="camp-meta">
+                        <span class="camp-pill">📅 {{ camp.date }}</span>
+                        <span class="camp-pill">📍 {{ camp.location }}</span>
+                        <span class="camp-pill">👥 {{ camp.participants.count }} donors expected</span>
+                    </div>
+                    <p style="color: #556070; font-size: 0.98rem; line-height: 1.75;">{{ camp.description }}</p>
+                    <div class="camp-card-actions">
+                        <button type="button" class="camp-details-btn" data-camp-id="{{ camp.id }}" data-camp-name="{{ camp.name }}" data-camp-date="{{ camp.date }}" data-camp-location="{{ camp.location }}" data-camp-description="{{ camp.description }}" data-camp-participants="{{ camp.participants.count }}">View Details</button>
+                        <button type="button" class="camp-mini-btn" onclick="document.getElementById('campSearch').value='{{ camp.location|escapejs }}'; filterCamps();">Filter by Location</button>
+                    </div>
+                </div>
+                <div class="camp-join-box">
                     {% if user.is_authenticated and user.donor %}
                         {% if user.donor in camp.participants.all %}
-                            <button style="background: #28a745; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: default; font-weight: bold;">Joined ✓</button>
+                            <button style="background: linear-gradient(135deg, #18a957, #2ec866); color: white; padding: 12px 20px; border: none; border-radius: 14px; cursor: default; font-weight: 800; box-shadow: 0 10px 24px rgba(40, 167, 69, 0.25);">Joined ✓</button>
                         {% else %}
                             <form action="{% url 'join_camp' camp.id %}" method="post">
                                 {% csrf_token %}
-                                <button type="submit" style="background: #d32f2f; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; transition: background 0.3s;">Join Camp</button>
+                                <button type="submit" style="background: linear-gradient(135deg, #d32f2f, #ff6659); color: white; padding: 12px 20px; border: none; border-radius: 14px; cursor: pointer; font-weight: 800; box-shadow: 0 10px 24px rgba(211, 47, 47, 0.25); transition: transform 0.3s, box-shadow 0.3s;">Join Camp</button>
                             </form>
                         {% endif %}
                     {% else %}
-                        <a href="{% url 'login' %}" style="display: inline-block; background: #555; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: bold;">Login to Join</a>
+                        <a href="{% url 'login' %}" style="display: inline-flex; align-items:center; justify-content:center; background: linear-gradient(135deg, #2d3748, #4a5568); color: white; padding: 12px 20px; text-decoration: none; border-radius: 14px; font-weight: 800; box-shadow: 0 10px 24px rgba(45, 55, 72, 0.2);">Login to Join</a>
                     {% endif %}
                 </div>
             </div>
-            <div style="margin-top: 20px; padding-top: 15px; border-top: 1px solid #eee; color: #888; font-size: 0.9rem;">
-                <strong>Participants:</strong> {{ camp.participants.count }} Donors expected
-            </div>
         </div>
         {% empty %}
-        <div style="text-align: center; color: #999; padding: 50px;">
+        <div class="camp-empty">
             <h3>No upcoming blood camps at the moment. Please check back later!</h3>
         </div>
         {% endfor %}
     </div>
+
+    <div id="campModal" class="camp-modal" aria-hidden="true">
+        <div class="camp-modal-card" role="dialog" aria-modal="true" aria-labelledby="campModalTitle">
+            <button type="button" class="camp-modal-close" onclick="closeCampModal()" aria-label="Close camp details">×</button>
+            <div class="camp-modal-badge">Blood Camp</div>
+            <h2 id="campModalTitle"></h2>
+            <div class="camp-meta camp-modal-meta">
+                <span class="camp-pill" id="campModalDate"></span>
+                <span class="camp-pill" id="campModalLocation"></span>
+                <span class="camp-pill" id="campModalParticipants"></span>
+            </div>
+            <p id="campModalDescription"></p>
+            <div class="camp-modal-actions">
+                <a id="campModalJoin" href="#" class="camp-modal-join">Join Camp</a>
+                <button type="button" class="camp-modal-secondary" onclick="closeCampModal()">Keep Browsing</button>
+            </div>
+        </div>
+    </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const campSearch = document.getElementById('campSearch');
+    const campCards = Array.from(document.querySelectorAll('.camp-card'));
+    const campVisibleCount = document.getElementById('campVisibleCount');
+    const campModal = document.getElementById('campModal');
+    const campModalTitle = document.getElementById('campModalTitle');
+    const campModalDate = document.getElementById('campModalDate');
+    const campModalLocation = document.getElementById('campModalLocation');
+    const campModalParticipants = document.getElementById('campModalParticipants');
+    const campModalDescription = document.getElementById('campModalDescription');
+    const campModalJoin = document.getElementById('campModalJoin');
+
+    function filterCamps() {
+        const query = campSearch.value.trim().toLowerCase();
+        let visibleCount = 0;
+
+        campCards.forEach(card => {
+            const haystack = `${card.dataset.campName} ${card.dataset.campLocation} ${card.dataset.campDescription}`;
+            const matches = !query || haystack.includes(query);
+            card.style.display = matches ? '' : 'none';
+            if (matches) visibleCount += 1;
+        });
+
+        campVisibleCount.textContent = `${visibleCount} visible`;
+    }
+
+    function openCampModal(details) {
+        campModalTitle.textContent = details.name;
+        campModalDate.textContent = `📅 ${details.date}`;
+        campModalLocation.textContent = `📍 ${details.location}`;
+        campModalParticipants.textContent = `👥 ${details.participants} donors expected`;
+        campModalDescription.textContent = details.description;
+        campModalJoin.href = `{% url 'join_camp' 0 %}`.replace('/0/', `/${details.id}/`);
+        campModal.classList.add('is-open');
+        campModal.setAttribute('aria-hidden', 'false');
+    }
+
+    function closeCampModal() {
+        campModal.classList.remove('is-open');
+        campModal.setAttribute('aria-hidden', 'true');
+    }
+
+    campSearch.addEventListener('input', filterCamps);
+
+    document.querySelectorAll('.camp-details-btn').forEach(button => {
+        button.addEventListener('click', () => {
+            openCampModal({
+                id: button.dataset.campId,
+                name: button.dataset.campName,
+                date: button.dataset.campDate,
+                location: button.dataset.campLocation,
+                description: button.dataset.campDescription,
+                participants: button.dataset.campParticipants,
+            });
+        });
+    });
+
+    campModal.addEventListener('click', event => {
+        if (event.target === campModal) {
+            closeCampModal();
+        }
+    });
+
+    document.addEventListener('keydown', event => {
+        if (event.key === 'Escape') {
+            closeCampModal();
+        }
+    });
+</script>
 {% endblock %}
