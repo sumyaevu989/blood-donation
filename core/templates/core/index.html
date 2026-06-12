@@ -133,6 +133,7 @@
                     <th>Phone</th>
                     <th>Location</th>
                     <th>Area</th>
+                    <th>Last Donated</th>
                     <th>Action</th>
                 </tr>
             </thead>
@@ -146,13 +147,29 @@
                     <td>{{ donor.location }}</td>
                     <td>{{ donor.area|default:"-" }}</td>
                     <td>
+                        {% if donor.last_donation_date %}
+                            {% if donor.donation_recency == 'recent' %}
+                                <span class="donation-badge donation-recent" title="Donated recently">{{ donor.last_donation_date|date:"F j, Y" }}</span>
+                            {% elif donor.donation_recency == 'cooldown' %}
+                                <span class="donation-badge donation-cooldown" title="Next eligible: {{ donor.next_eligible_date }}">{{ donor.last_donation_date|date:"F j, Y" }}</span>
+                            {% elif donor.donation_recency == 'eligible' %}
+                                <span class="donation-badge donation-eligible" title="Eligible to donate">{{ donor.last_donation_date|date:"F j, Y" }}</span>
+                            {% else %}
+                                <span class="donation-badge donation-unknown" title="No donation record">{{ donor.last_donation_date|date:"F j, Y" }}</span>
+                            {% endif %}
+                            <br><small style="color:#666;">({{ donor.days_since_last_donation }} days ago)</small>
+                        {% else %}
+                            <span class="donation-badge donation-unknown" title="No donation record">Not recorded</span>
+                        {% endif %}
+                    </td>
+                    <td>
                         <button class="btn-contact" onclick="handleContactDjango('{{ donor.phone }}', '{{ donor.user.first_name }}', '{{ donor.user.email }}', '{% if user.is_authenticated %}true{% else %}false{% endif %}')">
                             Contact
                         </button>
                     </td>
                 </tr>
                 {% empty %}
-                <tr><td colspan="7" class="no-search">No donors found. Be the first to register!</td></tr>
+                <tr><td colspan="8" class="no-search">No donors found. Be the first to register!</td></tr>
                 {% endfor %}
             </tbody>
         </table>
@@ -251,15 +268,16 @@
                     tr.innerHTML = `
                         <td>${donor.name}</td>
                         <td><span class="blood-badge">${donor.blood_group}</span></td>
-                        <td>${emailDisplay}</td>
-                        <td>${donor.phone}</td>
-                        <td>${donor.location}</td>
-                        <td>${donor.area}</td>
-                        <td>
-                            <button class="btn-contact" onclick="handleContactDjango('${donor.phone}', '${donor.name}', '${donor.email}', '${isAuthenticated}')">
-                                Contact
-                            </button>
-                        </td>
+                                <td>${emailDisplay}</td>
+                                <td>${donor.phone}</td>
+                                <td>${donor.location}</td>
+                                <td>${donor.area}</td>
+                                <td>` + (donor.last_donation_date ? (`<span class="donation-badge donation-${donor.recency}" title="${donor.recency === 'recent' ? 'Donated recently' : (donor.recency === 'cooldown' ? 'Next eligible: ' + (donor.next_eligible_date ? new Date(donor.next_eligible_date).toLocaleDateString() : '') : (donor.recency === 'eligible' ? 'Eligible to donate' : 'No donation record'))}">` + new Date(donor.last_donation_date).toLocaleDateString() + `</span><br><small style="color:#666;">(` + (donor.days_since_last_donation !== null ? donor.days_since_last_donation + ` days ago` : `Unknown`) + `)</small>`) : `<span class="donation-badge donation-unknown" title="No donation record">Not recorded</span>`) + `</td>
+                                <td>
+                                    <button class="btn-contact" onclick="handleContactDjango('${donor.phone}', '${donor.name}', '${donor.email}', '${isAuthenticated}')">
+                                        Contact
+                                    </button>
+                                </td>
                     `;
                     tbody.appendChild(tr);
                 });

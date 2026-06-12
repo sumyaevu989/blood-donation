@@ -124,6 +124,7 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
     <script>
         const donorsByGroup = {{ donors_by_group|default:"{}"|safe }};
         const labels = Object.keys(donorsByGroup);
@@ -144,6 +145,7 @@
 
         // --- Render Bar Chart ---
         const barCtx = document.getElementById('donorsBarChart').getContext('2d');
+        Chart.register(ChartDataLabels);
         new Chart(barCtx, {
             type: 'bar',
             data: {
@@ -167,7 +169,25 @@
                         backgroundColor: '#2C3E50',
                         padding: 12,
                         titleFont: { size: 14 },
-                        bodyFont: { size: 14 }
+                        bodyFont: { size: 14 },
+                        callbacks: {
+                            label: function(context) {
+                                const value = context.parsed.y;
+                                const sum = context.chart.data.datasets[0].data.reduce((a,b) => a + b, 0);
+                                const pct = sum ? (value * 100 / sum).toFixed(1) : 0;
+                                return context.label + ': ' + value + ' (' + pct + '%)';
+                            }
+                        }
+                    },
+                    datalabels: {
+                        color: '#ffffff',
+                        anchor: 'end',
+                        align: 'end',
+                        formatter: function(value, ctx) {
+                            const sum = ctx.chart.data.datasets[0].data.reduce((a,b) => a + b, 0);
+                            return sum ? (value * 100 / sum).toFixed(1) + '%' : '';
+                        },
+                        font: { weight: '700', size: 12 }
                     }
                 },
                 scales: {
@@ -218,15 +238,21 @@
                         callbacks: {
                             label: function(context) {
                                 let label = context.label || '';
-                                if (label) {
-                                    label += ': ';
-                                }
-                                if (context.parsed !== null) {
-                                    label += context.parsed + ' Donors';
-                                }
-                                return label;
+                                const value = context.parsed;
+                                const sum = context.chart.data.datasets[0].data.reduce((a,b) => a + b, 0);
+                                const pct = sum ? (value * 100 / sum).toFixed(1) : 0;
+                                if (label) label += ': ';
+                                return label + value + ' Donors (' + pct + '%)';
                             }
                         }
+                    },
+                    datalabels: {
+                        color: '#ffffff',
+                        formatter: function(value, ctx) {
+                            const sum = ctx.chart.data.datasets[0].data.reduce((a,b) => a + b, 0);
+                            return sum ? (value * 100 / sum).toFixed(1) + '%' : '';
+                        },
+                        font: { weight: '700', size: 12 }
                     }
                 },
                 layout: {

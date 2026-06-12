@@ -27,6 +27,33 @@ class Donor(models.Model):
         return self.last_donation_date + timedelta(days=120)
 
     @property
+    def days_since_last_donation(self):
+        """Return number of days since the last donation or None if unknown."""
+        if not self.last_donation_date:
+            return None
+        return (timezone.now().date() - self.last_donation_date).days
+
+    @property
+    def donation_recency(self):
+        """Return a recency category: 'recent', 'cooldown', 'eligible', or 'unknown'.
+
+        - 'recent' : donated within last 30 days
+        - 'cooldown': donated between 31 and 119 days ago
+        - 'eligible': donated 120+ days ago
+        - 'unknown': no recorded donation
+        """
+        if not self.last_donation_date:
+            return 'unknown'
+        days = self.days_since_last_donation
+        if days is None:
+            return 'unknown'
+        if days <= 30:
+            return 'recent'
+        if days < 120:
+            return 'cooldown'
+        return 'eligible'
+
+    @property
     def badge(self):
         if self.total_donations >= 10:
             return "Life Saver 👑"
@@ -83,3 +110,17 @@ class BloodCamp(models.Model):
 
     def __str__(self):
         return self.name
+
+
+class DonationHistory(models.Model):
+    donor = models.ForeignKey(Donor, on_delete=models.CASCADE, related_name='donation_history')
+    donation_date = models.DateField()
+    location = models.CharField(max_length=200, blank=True, null=True)
+    notes = models.TextField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-donation_date']
+
+    def __str__(self):
+        return f"{self.donor.user.username} - {self.donation_date}"

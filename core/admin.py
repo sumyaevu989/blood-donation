@@ -5,6 +5,7 @@ import csv
 from django.urls import path
 from django.shortcuts import redirect
 from .models import Donor, BloodRequest, ContactMessage, BloodBankInventory
+from .models import DonationHistory
 from django.db.models import Count, Q
 from django.core.mail import send_mail
 from django.conf import settings
@@ -202,6 +203,11 @@ admin_site.register(BloodRequest, BloodRequestAdmin)
 admin_site.register(BloodBankInventory, BloodBankInventoryAdmin)
 admin_site.register(BloodCamp, BloodCampAdmin)
 admin_site.register(ContactMessage, ContactMessageAdmin)
+class DonationHistoryAdmin(admin.ModelAdmin):
+	list_display = ('donor', 'donation_date', 'location', 'created_at')
+	search_fields = ('donor__user__username', 'location')
+
+admin_site.register(DonationHistory, DonationHistoryAdmin)
 admin_site.register(User, UserAdminWrapper)
 
 def _send_donors_mailto(request):

@@ -4,7 +4,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.contrib.auth.models import User
 from django.http import HttpResponse
-from .models import Donor, ContactMessage, BloodRequest, BloodBankInventory, BloodCamp
+from .models import Donor, ContactMessage, BloodRequest, BloodBankInventory, BloodCamp, DonationHistory
 from .forms import DonorRegistrationForm
 import random
 import io
@@ -94,6 +94,9 @@ def request_blood_view(request):
     return render(request, 'core/request_blood.html', {'requests': requests})
 
 from django.http import JsonResponse
+from django.views.decorators.http import require_http_methods
+from django.views.decorators.csrf import csrf_exempt
+import json
 
 def index(request):
     donors = Donor.objects.all()
@@ -122,7 +125,12 @@ def index(request):
                 'phone': d.phone,
                 'location': d.location,
                 'area': d.area if d.area else '-',
-                'email': d.user.email
+                'email': d.user.email,
+                'last_donation_date': d.last_donation_date.isoformat() if d.last_donation_date else None,
+                'days_since_last_donation': d.days_since_last_donation,
+                'is_eligible': d.is_eligible,
+                'next_eligible_date': d.next_eligible_date.isoformat() if d.next_eligible_date else None,
+                'recency': d.donation_recency,
             })
         return JsonResponse({'donors': donors_data})
         
@@ -249,3 +257,95 @@ def generate_certificate(request):
     response = HttpResponse(buffer, content_type='application/pdf')
     response['Content-Disposition'] = f'attachment; filename="Blood_Donation_Certificate_{request.user.username}.pdf"'
     return response
+
+
+# --- Donation history JSON API ---
+@require_http_methods(['GET', 'POST'])
+def donor_donations_api(request, donor_id):
+    donor = get_object_or_404(Donor, id=donor_id)
+
+    if request.method == 'GET':
+        history = donor.donation_history.all().values('id', 'donation_date', 'location', 'notes', 'created_at')
+        data = []
+        for h in history:
+            data.append({
+                'id': h['id'],
+                'donation_date': h['donation_date'].isoformat() if h['donation_date'] else None,
+                'location': h['location'],
+                'notes': h['notes'],
+                'created_at': h['created_at'].isoformat() if h['created_at'] else None,
+            })
+        return JsonResponse({'donations': data})
+
+    # POST -> create new donation (only donor owner or staff)
+    if request.method == 'POST':
+        if not request.user.is_authenticated:
+            return JsonResponse({'error': 'Authentication required'}, status=401)
+        if not (request.user.is_staff or getattr(request.user, 'donor', None) and request.user.donor.id == donor.id):
+            return JsonResponse({'error': 'Permission denied'}, status=403)
+
+        try:
+            payload = json.loads(request.body.decode('utf-8'))
+            donation_date = payload.get('donation_date')
+            location = payload.get('location')
+            notes = payload.get('notes')
+            if not donation_date:
+                return JsonResponse({'error': 'donation_date is required'}, status=400)
+            dh = DonationHistory.objects.create(
+                donor=donor,
+                donation_date=donation_date,
+                location=location,
+                notes=notes
+            )
+            # Recalculate donor aggregates
+            donor.total_donations = donor.donation_history.count()
+            latest = donor.donation_history.order_by('-donation_date').first()
+            donor.last_donation_date = latest.donation_date if latest else None
+            donor.save()
+
+            return JsonResponse({'id': dh.id, 'donation_date': dh.donation_date.isoformat(), 'location': dh.location, 'notes': dh.notes}, status=201)
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=400)
+
+
+@require_http_methods(['PUT', 'DELETE'])
+def donation_detail_api(request, donation_id):
+    dh = get_object_or_404(DonationHistory, id=donation_id)
+    donor = dh.donor
+
+    if not request.user.is_authenticated:
+        return JsonResponse({'error': 'Authentication required'}, status=401)
+    if not (request.user.is_staff or getattr(request.user, 'donor', None) and request.user.donor.id == donor.id):
+        return JsonResponse({'error': 'Permission denied'}, status=403)
+
+    if request.method == 'PUT':
+        try:
+            payload = json.loads(request.body.decode('utf-8'))
+            donation_date = payload.get('donation_date')
+            location = payload.get('location')
+            notes = payload.get('notes')
+            if donation_date:
+                dh.donation_date = donation_date
+            dh.location = location if location is not None else dh.location
+            dh.notes = notes if notes is not None else dh.notes
+            dh.save()
+            # Recalculate donor aggregates
+            donor.total_donations = donor.donation_history.count()
+            latest = donor.donation_history.order_by('-donation_date').first()
+            donor.last_donation_date = latest.donation_date if latest else None
+            donor.save()
+            return JsonResponse({'id': dh.id, 'donation_date': dh.donation_date.isoformat(), 'location': dh.location, 'notes': dh.notes})
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=400)
+
+    if request.method == 'DELETE':
+        try:
+            dh.delete()
+            # Recalculate donor aggregates
+            donor.total_donations = donor.donation_history.count()
+            latest = donor.donation_history.order_by('-donation_date').first()
+            donor.last_donation_date = latest.donation_date if latest else None
+            donor.save()
+            return JsonResponse({'deleted': True})
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=400)

@@ -61,6 +61,24 @@
                     <p><strong>Phone:</strong> {{ donor.phone }}</p>
                     <hr style="margin: 10px 0; border: none; border-top: 1px solid #eee;">
                     <p><strong>Total Donations:</strong> {{ donor.total_donations }}</p>
+                    <p><strong>Last Donation Date:</strong>
+                        {% if donor.last_donation_date %}
+                            {% if donor.donation_recency == 'recent' %}
+                                <span class="donation-badge donation-recent" title="Donated recently">{{ donor.last_donation_date|date:"F j, Y" }}</span>
+                            {% elif donor.donation_recency == 'cooldown' %}
+                                <span class="donation-badge donation-cooldown" title="Next eligible: {{ donor.next_eligible_date }}">{{ donor.last_donation_date|date:"F j, Y" }}</span>
+                            {% elif donor.donation_recency == 'eligible' %}
+                                <span class="donation-badge donation-eligible" title="Eligible to donate">{{ donor.last_donation_date|date:"F j, Y" }}</span>
+                            {% else %}
+                                <span class="donation-badge donation-unknown" title="No donation record">{{ donor.last_donation_date|date:"F j, Y" }}</span>
+                            {% endif %}
+                        {% else %}
+                            <span class="donation-badge donation-unknown" title="No donation record">Not recorded</span>
+                        {% endif %}
+                    </p>
+                    {% if donor.days_since_last_donation is not None %}
+                        <p><strong>Last Donated:</strong> {{ donor.days_since_last_donation }} days ago</p>
+                    {% endif %}
                     <p><strong>Donor Badge:</strong> <span style="font-weight: 800; font-size: 1.1em;">{{ donor.badge }}</span></p>
                     <p><strong>🎁 Reward Points:</strong> <span style="color: #f39c12; font-weight: bold; font-size: 1.1em;">{{ donor.reward_points }} pts</span> 
                         <br><small style="color: #888;">(Redeemable for 10% discount at partner hospitals!)</small>
@@ -95,6 +113,28 @@
                 {% if donor and donor.total_donations > 0 %}
                 <button class="btn-action" style="background-color:#4CAF50; color:white; border:none;" onclick="window.location.href='{% url 'generate_certificate' %}'">🎓 Download Certificate</button>
                 {% endif %}
+            </div>
+        </div>
+        <div class="dashboard-card" id="donationHistoryCard">
+            <div class="card-icon">🗓️</div>
+            <h3>Donation History</h3>
+            <div style="margin-top:10px;">
+                <button class="btn-action" onclick="openAddDonationModal()" style="max-width:200px">+ Add Donation</button>
+                <div style="margin-top:12px; max-height:220px; overflow:auto;">
+                    <table class="results-table" style="width:100%;">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Location</th>
+                                <th>Notes</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="donationHistoryBody">
+                            <tr><td colspan="4" style="color:#888;">Loading...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>
@@ -172,5 +212,147 @@
             });
         {% endif %}
     });
+</script>
+<!-- Donation History Modals & JS -->
+<div id="donationModal" class="modal" style="display:none;">
+    <div class="modal-content">
+        <div class="modal-header" id="donationModalHeader">Add Donation</div>
+        <form id="donationForm">
+            {% csrf_token %}
+            <div class="form-group">
+                <label>Date</label>
+                <input type="date" name="donation_date" id="donation_date" required>
+            </div>
+            <div class="form-group">
+                <label>Location</label>
+                <input type="text" name="location" id="donation_location">
+            </div>
+            <div class="form-group">
+                <label>Notes</label>
+                <textarea name="notes" id="donation_notes" rows="3"></textarea>
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn-primary" onclick="submitDonation()">Save</button>
+                <button type="button" class="btn-secondary" onclick="closeDonationModal()">Cancel</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+// CSRF helper
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+const csrftoken = getCookie('csrftoken');
+
+let editingDonationId = null;
+function openAddDonationModal() {
+    editingDonationId = null;
+    document.getElementById('donationModalHeader').innerText = 'Add Donation';
+    document.getElementById('donation_date').value = '';
+    document.getElementById('donation_location').value = '';
+    document.getElementById('donation_notes').value = '';
+    document.getElementById('donationModal').style.display = 'flex';
+}
+function closeDonationModal(){ document.getElementById('donationModal').style.display='none'; }
+
+function loadDonationHistory(){
+    const donorId = {% if donor %}{{ donor.id }}{% else %}null{% endif %};
+    if(!donorId) return;
+    fetch(`/api/donors/${donorId}/donations/`, { headers: { 'X-Requested-With':'XMLHttpRequest' } })
+    .then(r=>r.json())
+    .then(data=>{
+        const tbody = document.getElementById('donationHistoryBody');
+        tbody.innerHTML = '';
+        if(!data.donations || data.donations.length===0){
+            tbody.innerHTML = '<tr><td colspan="4" style="color:#888;">No donation records.</td></tr>';
+            return;
+        }
+        data.donations.forEach(d=>{
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${new Date(d.donation_date).toLocaleDateString()}</td>
+                <td>${d.location || '-'}</td>
+                <td>${d.notes ? (d.notes.length>80? d.notes.substr(0,80)+'...': d.notes) : '-'}</td>
+                <td>
+                    <button class="btn-secondary" onclick="openEditDonation(${d.id})">Edit</button>
+                    <button class="btn-action" style="background:#ef4444;color:#fff;margin-left:6px;" onclick="deleteDonation(${d.id})">Delete</button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }).catch(err=>{ console.error(err); });
+}
+
+function submitDonation(){
+    const donorId = {% if donor %}{{ donor.id }}{% else %}null{% endif %};
+    if(!donorId) return alert('No donor profile.');
+    const payload = {
+        donation_date: document.getElementById('donation_date').value,
+        location: document.getElementById('donation_location').value,
+        notes: document.getElementById('donation_notes').value
+    };
+    if(!payload.donation_date) return alert('Please pick a date');
+
+    if(editingDonationId){
+        fetch(`/api/donations/${editingDonationId}/`, {
+            method: 'PUT',
+            headers: { 'Content-Type':'application/json', 'X-CSRFToken': csrftoken },
+            body: JSON.stringify(payload)
+        }).then(r=>r.json()).then(res=>{
+            if(res.error) return alert(res.error);
+            closeDonationModal(); loadDonationHistory(); location.reload();
+        }).catch(e=>console.error(e));
+    } else {
+        fetch(`/api/donors/${donorId}/donations/`, {
+            method: 'POST',
+            headers: { 'Content-Type':'application/json', 'X-CSRFToken': csrftoken },
+            body: JSON.stringify(payload)
+        }).then(r=>r.json()).then(res=>{
+            if(res.error) return alert(res.error);
+            closeDonationModal(); loadDonationHistory(); location.reload();
+        }).catch(e=>console.error(e));
+    }
+}
+
+function openEditDonation(id){
+    editingDonationId = id;
+    document.getElementById('donationModalHeader').innerText = 'Edit Donation';
+    // fetch the single donation via list (simpler)
+    const donorId = {% if donor %}{{ donor.id }}{% else %}null{% endif %};
+    fetch(`/api/donors/${donorId}/donations/`, { headers: { 'X-Requested-With':'XMLHttpRequest' } })
+    .then(r=>r.json()).then(data=>{
+        const d = data.donations.find(x=>x.id===id);
+        if(!d) return alert('Record not found');
+        document.getElementById('donation_date').value = d.donation_date;
+        document.getElementById('donation_location').value = d.location || '';
+        document.getElementById('donation_notes').value = d.notes || '';
+        document.getElementById('donationModal').style.display='flex';
+    });
+}
+
+function deleteDonation(id){
+    if(!confirm('Delete this donation record?')) return;
+    fetch(`/api/donations/${id}/`, { method: 'DELETE', headers: { 'X-CSRFToken': csrftoken } })
+    .then(r=>r.json()).then(res=>{
+        if(res.error) return alert(res.error);
+        loadDonationHistory(); location.reload();
+    }).catch(e=>console.error(e));
+}
+
+// Load history on page load
+document.addEventListener('DOMContentLoaded', function(){ loadDonationHistory(); });
 </script>
 {% endblock %}

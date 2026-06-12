@@ -375,6 +375,31 @@ button {
     color: var(--dark-red);
 }
 
+/* Donation status badges */
+.donation-badge {
+    display: inline-block;
+    padding: 6px 10px;
+    border-radius: 999px;
+    font-weight: 700;
+    font-size: 13px;
+}
+.donation-eligible {
+    background: #16a34a; /* green */
+    color: white;
+}
+.donation-cooldown {
+    background: #f97316; /* orange */
+    color: white;
+}
+.donation-unknown {
+    background: #6b7280; /* gray */
+    color: white;
+}
+.donation-recent {
+    background: #ef4444; /* red */
+    color: white;
+}
+
 /* --- DASHBOARD GRID --- */
 .welcome-section {
     background: linear-gradient(135deg, var(--dark-red), var(--primary-red));
