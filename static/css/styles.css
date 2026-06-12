@@ -948,15 +948,15 @@ tbody tr:hover {
 }
 
 .camp-booking-card h2 {
-    margin-bottom: 10px;
+    margin-bottom: 12px;
 }
 
 .camp-booking-intro {
-    margin: 0 0 18px;
+    margin: 0 0 22px;
     color: var(--text-muted);
     font-size: 15px;
     line-height: 1.75;
-    max-width: 34ch;
+    max-width: 36ch;
 }
 
 .camp-map {
@@ -990,6 +990,7 @@ tbody tr:hover {
     min-height: 120px;
     align-content: center;
     padding-top: 2px;
+    margin-top: 12px;
 }
 
 .camp-booking-feedback {
@@ -1005,7 +1006,7 @@ tbody tr:hover {
 
 .camp-booking-cta a {
     justify-self: start;
-    margin-top: 14px;
+    margin-top: 0;
 }
 
 .camp-toolbar-pill {
