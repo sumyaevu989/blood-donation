@@ -73,6 +73,7 @@
                 <div>
                     <p class="camp-section-kicker">Schedule</p>
                     <h2>Book a donation slot</h2>
+                    <p class="camp-booking-intro">Login with a donor account to schedule a donation slot and keep reminders in one place.</p>
                 </div>
             </div>
             {% if user.is_authenticated and user.donor %}
@@ -99,7 +100,6 @@
                 </form>
             {% else %}
                 <div class="camp-booking-cta">
-                    <p>Login with a donor account to schedule a donation slot and keep reminders in one place.</p>
                     <a href="{% url 'login' %}" class="camp-hero-btn">Login to Schedule</a>
                 </div>
             {% endif %}
