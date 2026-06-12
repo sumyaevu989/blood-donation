@@ -932,6 +932,12 @@ tbody tr:hover {
     margin-bottom: 14px;
 }
 
+.camp-booking-copy {
+    display: grid;
+    gap: 8px;
+    padding-bottom: 6px;
+}
+
 .camp-section-kicker {
     margin-bottom: 6px;
     text-transform: uppercase;
@@ -948,11 +954,11 @@ tbody tr:hover {
 }
 
 .camp-booking-card h2 {
-    margin-bottom: 12px;
+    margin-bottom: 2px;
 }
 
 .camp-booking-intro {
-    margin: 0 0 22px;
+    margin: 0;
     color: var(--text-muted);
     font-size: 15px;
     line-height: 1.75;
@@ -987,10 +993,11 @@ tbody tr:hover {
     display: grid;
     gap: 0;
     color: var(--text-muted);
-    min-height: 120px;
-    align-content: center;
-    padding-top: 2px;
-    margin-top: 12px;
+    min-height: 96px;
+    align-content: start;
+    padding-top: 22px;
+    margin-top: 0;
+    border-top: 1px solid rgba(211, 47, 47, 0.08);
 }
 
 .camp-booking-feedback {
