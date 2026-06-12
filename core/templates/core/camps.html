@@ -1,6 +1,10 @@
 {% extends 'core/base.html' %}
 {% block title %}Upcoming Blood Camps{% endblock %}
 {% block body_class %}camp-environment-page{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+{% endblock %}
 {% block content %}
 <div class="camp-page-shell">
     <section class="camp-hero">
@@ -39,6 +43,57 @@
         <div class="camp-toolbar-summary">
             <span class="camp-toolbar-pill">Live filter</span>
             <span id="campVisibleCount">{{ camps|length }} visible</span>
+        </div>
+    </section>
+
+    <section class="camp-map-grid">
+        <div class="camp-map-card">
+            <div class="camp-map-card-head">
+                <div>
+                    <p class="camp-section-kicker">Live Map</p>
+                    <h2>See camps on the map</h2>
+                </div>
+                <button type="button" class="camp-mini-btn" id="campMapRecenterBtn">Recenter</button>
+            </div>
+            <div id="campMap" class="camp-map" aria-label="Blood camp map"></div>
+            <p class="camp-map-note">Markers appear for camps that have latitude and longitude saved. Camps without coordinates still appear in the list below.</p>
+        </div>
+
+        <div class="camp-booking-card">
+            <div class="camp-map-card-head">
+                <div>
+                    <p class="camp-section-kicker">Schedule</p>
+                    <h2>Book a donation slot</h2>
+                </div>
+            </div>
+            {% if user.is_authenticated and user.donor %}
+                <form id="appointmentForm" class="camp-booking-form">
+                    <div class="form-group">
+                        <label for="appointmentCamp">Choose camp</label>
+                        <select id="appointmentCamp" required>
+                            <option value="">Select a camp</option>
+                            {% for camp in camps %}
+                                <option value="{{ camp.id }}">{{ camp.name }} - {{ camp.location }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="appointmentDateTime">Date & time</label>
+                        <input type="datetime-local" id="appointmentDateTime" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="appointmentCenterNote">Optional note</label>
+                        <textarea id="appointmentCenterNote" rows="3" placeholder="Add a short note for your donation slot"></textarea>
+                    </div>
+                    <button type="submit" class="camp-details-btn">Schedule Appointment</button>
+                    <p class="camp-booking-feedback" id="appointmentFeedback">Appointments will be saved through the JSON API.</p>
+                </form>
+            {% else %}
+                <div class="camp-booking-cta">
+                    <p>Login with a donor account to schedule a donation slot and keep reminders in one place.</p>
+                    <a href="{% url 'login' %}" class="camp-hero-btn">Login to Schedule</a>
+                </div>
+            {% endif %}
         </div>
     </section>
 
@@ -127,6 +182,9 @@
         });
 
         campVisibleCount.textContent = `${visibleCount} visible`;
+        if (window.refreshCampMarkerVisibility) {
+            window.refreshCampMarkerVisibility();
+        }
     }
 
     function openCampModal(details) {
@@ -171,5 +229,139 @@
             closeCampModal();
         }
     });
+</script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<script>
+    (function () {
+        const mapElement = document.getElementById('campMap');
+        if (!mapElement || typeof L === 'undefined') {
+            return;
+        }
+
+        const map = L.map('campMap', { scrollWheelZoom: false }).setView([23.8103, 90.4125], 7);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '&copy; OpenStreetMap contributors',
+        }).addTo(map);
+
+        const markers = [];
+        let campsPayload = [];
+
+        function applyMarkerFilter() {
+            const query = (campSearch.value || '').trim().toLowerCase();
+            markers.forEach(marker => {
+                const data = marker._campData || {};
+                const matches = !query || `${data.name || ''} ${data.location || ''} ${data.description || ''}`.includes(query);
+                if (matches) {
+                    marker.addTo(map);
+                } else {
+                    map.removeLayer(marker);
+                }
+            });
+        }
+
+        window.refreshCampMarkerVisibility = applyMarkerFilter;
+
+        async function loadMapData() {
+            try {
+                const response = await fetch('{% url 'api_camps' %}', { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+                const payload = await response.json();
+                campsPayload = payload.camps || [];
+
+                markers.forEach(marker => map.removeLayer(marker));
+                markers.length = 0;
+
+                const bounds = [];
+                campsPayload.forEach(camp => {
+                    if (camp.latitude === null || camp.longitude === null || camp.latitude === undefined || camp.longitude === undefined) {
+                        return;
+                    }
+
+                    const marker = L.marker([camp.latitude, camp.longitude]).addTo(map);
+                    marker.bindPopup(`<strong>${camp.name}</strong><br>${camp.location}<br>${camp.date}`);
+                    marker._campData = {
+                        name: (camp.name || '').toLowerCase(),
+                        location: (camp.location || '').toLowerCase(),
+                        description: (camp.description || '').toLowerCase(),
+                    };
+                    markers.push(marker);
+                    bounds.push([camp.latitude, camp.longitude]);
+                });
+
+                if (bounds.length) {
+                    map.fitBounds(bounds, { padding: [30, 30] });
+                }
+
+                applyMarkerFilter();
+            } catch (error) {
+                console.error('Failed to load camps for map', error);
+            }
+        }
+
+        const recenterBtn = document.getElementById('campMapRecenterBtn');
+        if (recenterBtn) {
+            recenterBtn.addEventListener('click', () => {
+                map.setView([23.8103, 90.4125], 7);
+            });
+        }
+
+        const appointmentForm = document.getElementById('appointmentForm');
+        const appointmentCamp = document.getElementById('appointmentCamp');
+        const appointmentDateTime = document.getElementById('appointmentDateTime');
+        const appointmentCenterNote = document.getElementById('appointmentCenterNote');
+        const appointmentFeedback = document.getElementById('appointmentFeedback');
+
+        function getCsrfToken() {
+            const match = document.cookie.match(/(?:^|; )csrftoken=([^;]+)/);
+            return match ? decodeURIComponent(match[1]) : '';
+        }
+
+        if (appointmentForm) {
+            appointmentForm.addEventListener('submit', async event => {
+                event.preventDefault();
+
+                const campId = appointmentCamp.value;
+                const scheduledAt = appointmentDateTime.value;
+                const note = appointmentCenterNote.value.trim();
+
+                if (!campId || !scheduledAt) {
+                    appointmentFeedback.textContent = 'Please choose a camp and date/time.';
+                    return;
+                }
+
+                appointmentFeedback.textContent = 'Saving appointment...';
+
+                try {
+                    const response = await fetch('{% url 'api_appointments' %}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': getCsrfToken(),
+                        },
+                        body: JSON.stringify({
+                            camp_id: campId,
+                            scheduled_at: scheduledAt,
+                            notes: note,
+                        }),
+                    });
+
+                    const payload = await response.json();
+
+                    if (!response.ok || payload.error) {
+                        appointmentFeedback.textContent = payload.error || 'Could not save appointment.';
+                        return;
+                    }
+
+                    appointmentFeedback.textContent = `Appointment saved for ${new Date(payload.scheduled_at).toLocaleString()}. Reminder queue is ready.`;
+                    appointmentCenterNote.value = '';
+                } catch (error) {
+                    appointmentFeedback.textContent = 'Network error while saving appointment.';
+                    console.error(error);
+                }
+            });
+        }
+
+        loadMapData();
+    })();
 </script>
 {% endblock %}

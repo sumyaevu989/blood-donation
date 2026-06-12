@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Blood Donation System{% endblock %}</title>
     <link rel="stylesheet" href="{% static 'css/styles.css' %}?v=2.0">
+    {% block extra_head %}{% endblock %}
 </head>
 <body class="{% block body_class %}dashboard-page{% endblock %}">
     <div class="site-shell">
