@@ -20,4 +20,8 @@ urlpatterns = [
     # Donation history API
     path('api/donors/<int:donor_id>/donations/', views.donor_donations_api, name='api_donor_donations'),
     path('api/donations/<int:donation_id>/', views.donation_detail_api, name='api_donation_detail'),
+    # New APIs for geolocation, camps and appointments
+    path('api/camps/', views.camps_api, name='api_camps'),
+    path('api/nearby-donors/', views.nearby_donors_api, name='api_nearby_donors'),
+    path('api/appointments/', views.appointments_api, name='api_appointments'),
 ]

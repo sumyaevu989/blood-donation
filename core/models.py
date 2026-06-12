@@ -11,6 +11,9 @@ class Donor(models.Model):
     blood_group = models.CharField(max_length=5)
     location = models.CharField(max_length=100)
     area = models.CharField(max_length=100, blank=True, null=True)
+    # optional geolocation for improved matching
+    latitude = models.FloatField(blank=True, null=True)
+    longitude = models.FloatField(blank=True, null=True)
     last_donation_date = models.DateField(blank=True, null=True)
     total_donations = models.IntegerField(default=0)
 
@@ -97,6 +100,8 @@ class BloodBankInventory(models.Model):
     blood_group = models.CharField(max_length=5, unique=True)
     bags_available = models.IntegerField(default=0)
     last_updated = models.DateTimeField(auto_now=True)
+    # optional link to a physical blood center for real-time stock
+    center = models.ForeignKey('BloodCenter', on_delete=models.SET_NULL, blank=True, null=True, related_name='inventories')
 
     def __str__(self):
         return f"{self.blood_group} - {self.bags_available} Bags"
@@ -105,8 +110,13 @@ class BloodCamp(models.Model):
     name = models.CharField(max_length=200)
     date = models.DateField()
     location = models.CharField(max_length=200)
+    # optional geolocation for map display
+    latitude = models.FloatField(blank=True, null=True)
+    longitude = models.FloatField(blank=True, null=True)
     description = models.TextField()
     participants = models.ManyToManyField(Donor, blank=True, related_name='camps_joined')
+    capacity = models.IntegerField(blank=True, null=True)
+    is_active = models.BooleanField(default=True)
 
     def __str__(self):
         return self.name
@@ -124,3 +134,36 @@ class DonationHistory(models.Model):
 
     def __str__(self):
         return f"{self.donor.user.username} - {self.donation_date}"
+
+
+class BloodCenter(models.Model):
+    name = models.CharField(max_length=200)
+    address = models.CharField(max_length=300, blank=True, null=True)
+    latitude = models.FloatField(blank=True, null=True)
+    longitude = models.FloatField(blank=True, null=True)
+    phone = models.CharField(max_length=30, blank=True, null=True)
+
+    def __str__(self):
+        return self.name
+
+
+class DonationAppointment(models.Model):
+    STATUS_CHOICES = [
+        ('scheduled', 'Scheduled'),
+        ('completed', 'Completed'),
+        ('cancelled', 'Cancelled'),
+    ]
+
+    donor = models.ForeignKey(Donor, on_delete=models.CASCADE, related_name='appointments')
+    center = models.ForeignKey(BloodCenter, on_delete=models.SET_NULL, blank=True, null=True, related_name='appointments')
+    camp = models.ForeignKey(BloodCamp, on_delete=models.SET_NULL, blank=True, null=True, related_name='appointments')
+    scheduled_at = models.DateTimeField()
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='scheduled')
+    reminder_sent = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-scheduled_at']
+
+    def __str__(self):
+        return f"Appointment for {self.donor.user.username} at {self.scheduled_at}"

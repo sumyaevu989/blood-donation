@@ -97,6 +97,9 @@ from django.http import JsonResponse
 from django.views.decorators.http import require_http_methods
 from django.views.decorators.csrf import csrf_exempt
 import json
+from django.utils.dateparse import parse_datetime
+from django.utils import timezone
+import math
 
 def index(request):
     donors = Donor.objects.all()
@@ -349,3 +352,138 @@ def donation_detail_api(request, donation_id):
             return JsonResponse({'deleted': True})
         except Exception as e:
             return JsonResponse({'error': str(e)}, status=400)
+
+
+# --- New APIs ---
+def camps_api(request):
+    camps = BloodCamp.objects.filter(is_active=True).order_by('date')
+    data = []
+    for c in camps:
+        data.append({
+            'id': c.id,
+            'name': c.name,
+            'date': c.date.isoformat(),
+            'location': c.location,
+            'latitude': c.latitude,
+            'longitude': c.longitude,
+            'description': c.description,
+            'participants': c.participants.count(),
+            'capacity': c.capacity,
+        })
+    return JsonResponse({'camps': data})
+
+
+def _haversine_distance(lat1, lon1, lat2, lon2):
+    # returns distance in kilometers between two lat/lon points
+    if None in (lat1, lon1, lat2, lon2):
+        return None
+    R = 6371.0
+    phi1 = math.radians(lat1)
+    phi2 = math.radians(lat2)
+    dphi = math.radians(lat2 - lat1)
+    dlambda = math.radians(lon2 - lon1)
+    a = math.sin(dphi/2)**2 + math.cos(phi1)*math.cos(phi2)*math.sin(dlambda/2)**2
+    c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+    return R * c
+
+
+def nearby_donors_api(request):
+    try:
+        lat = float(request.GET.get('lat'))
+        lng = float(request.GET.get('lng'))
+    except (TypeError, ValueError):
+        return JsonResponse({'error': 'lat and lng query parameters required'}, status=400)
+
+    radius_km = float(request.GET.get('radius_km', 10))
+    blood_group = request.GET.get('blood_group')
+
+    donors = Donor.objects.exclude(latitude__isnull=True).exclude(longitude__isnull=True)
+    if blood_group:
+        donors = donors.filter(blood_group=blood_group)
+
+    results = []
+    for d in donors:
+        if not d.is_eligible:
+            continue
+        dist = _haversine_distance(lat, lng, d.latitude, d.longitude)
+        if dist is None:
+            continue
+        if dist <= radius_km:
+            results.append({
+                'id': d.id,
+                'name': d.user.username,
+                'blood_group': d.blood_group,
+                'phone': d.phone,
+                'latitude': d.latitude,
+                'longitude': d.longitude,
+                'distance_km': round(dist, 2),
+                'last_donation_date': d.last_donation_date.isoformat() if d.last_donation_date else None,
+                'is_eligible': d.is_eligible,
+            })
+
+    results.sort(key=lambda x: x['distance_km'])
+    return JsonResponse({'donors': results})
+
+
+@csrf_exempt
+@require_http_methods(['GET', 'POST'])
+def appointments_api(request):
+    # GET -> list appointments for current user (or all for staff)
+    if request.method == 'GET':
+        if not request.user.is_authenticated:
+            return JsonResponse({'error': 'Authentication required'}, status=401)
+        if request.user.is_staff:
+            appts = DonationAppointment.objects.all()
+        else:
+            donor = getattr(request.user, 'donor', None)
+            if not donor:
+                return JsonResponse({'error': 'Only donors can view appointments'}, status=403)
+            appts = donor.appointments.all()
+
+        data = []
+        for a in appts:
+            data.append({
+                'id': a.id,
+                'donor': a.donor.user.username,
+                'center': a.center.id if a.center else None,
+                'camp': a.camp.id if a.camp else None,
+                'scheduled_at': a.scheduled_at.isoformat(),
+                'status': a.status,
+                'reminder_sent': a.reminder_sent,
+            })
+        return JsonResponse({'appointments': data})
+
+    # POST -> create appointment
+    try:
+        if not request.user.is_authenticated:
+            return JsonResponse({'error': 'Authentication required'}, status=401)
+        donor = getattr(request.user, 'donor', None)
+        if not donor:
+            return JsonResponse({'error': 'Only donors can create appointments'}, status=403)
+
+        payload = json.loads(request.body.decode('utf-8'))
+        scheduled_at = payload.get('scheduled_at')
+        center_id = payload.get('center_id')
+        camp_id = payload.get('camp_id')
+        if not scheduled_at:
+            return JsonResponse({'error': 'scheduled_at is required (ISO datetime)'}, status=400)
+        dt = parse_datetime(scheduled_at)
+        if dt is None:
+            return JsonResponse({'error': 'Invalid datetime format'}, status=400)
+        # ensure timezone-aware
+        if timezone.is_naive(dt):
+            dt = timezone.make_aware(dt)
+
+        center = None
+        camp = None
+        if center_id:
+            from .models import BloodCenter
+            center = BloodCenter.objects.filter(id=center_id).first()
+        if camp_id:
+            from .models import BloodCamp
+            camp = BloodCamp.objects.filter(id=camp_id).first()
+
+        appt = DonationAppointment.objects.create(donor=donor, center=center, camp=camp, scheduled_at=dt)
+        return JsonResponse({'id': appt.id, 'scheduled_at': appt.scheduled_at.isoformat(), 'status': appt.status}, status=201)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=400)
