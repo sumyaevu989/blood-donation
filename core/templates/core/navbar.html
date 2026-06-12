@@ -1,6 +1,12 @@
 <nav class="navbar">
     <div class="nav-container">
-        <div class="nav-logo">🩸 Blood Donation System</div>
+        <a href="{% url 'index' %}" class="nav-logo" aria-label="Blood Donation System home">
+            <span class="nav-logo-mark">BD</span>
+            <span class="nav-logo-copy">
+                <strong>Blood Donation</strong>
+                <small>Save lives together</small>
+            </span>
+        </a>
         <ul class="nav-menu">
             <li><a href="{% url 'index' %}">Home</a></li>
             <li><a href="{% url 'request_blood' %}">Request Blood</a></li>
@@ -18,7 +24,7 @@
                 <li><a href="{% url 'login' %}">Login</a></li>
                 <li><a href="{% url 'register' %}">Register</a></li>
             {% endif %}
-            <li><button id="themeToggleBtn" class="theme-btn">🌙</button></li>
+            <li><button id="themeToggleBtn" class="theme-btn nav-theme-btn" title="Toggle theme" aria-label="Toggle theme">🌙</button></li>
         </ul>
     </div>
 </nav>

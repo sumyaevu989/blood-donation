@@ -54,17 +54,19 @@ body {
 
 /* --- NAVBAR --- */
 .navbar {
-    background: var(--nav-bg);
-    backdrop-filter: blur(15px);
-    -webkit-backdrop-filter: blur(15px);
-    box-shadow: var(--shadow-strong);
+    background:
+        linear-gradient(135deg, rgba(255,255,255,0.92), rgba(255,245,245,0.88)),
+        var(--nav-bg);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    box-shadow: 0 18px 45px rgba(154, 0, 7, 0.12);
     position: sticky;
     top: 20px;
     z-index: 1000;
     max-width: 1350px;
     margin: 20px auto 30px auto;
     border-radius: 50px;
-    border: 1px solid rgba(211, 47, 47, 0.2);
+    border: 1px solid rgba(211, 47, 47, 0.14);
 }
 
 .nav-container {
@@ -73,54 +75,93 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 10px 20px;
+    gap: 18px;
+    padding: 12px 18px;
 }
 
 .nav-logo {
-    color: var(--primary-red);
-    font-size: 20px; /* Reduced slightly to save space */
-    font-weight: 800;
-    display: flex;
+    color: var(--text-main);
+    text-decoration: none;
+    display: inline-flex;
     align-items: center;
-    gap: 8px;
-    text-transform: uppercase;
-    letter-spacing: 1px;
+    gap: 12px;
+    padding: 8px 16px 8px 10px;
+    border-radius: 999px;
+    background: rgba(255,255,255,0.7);
+    border: 1px solid rgba(211,47,47,0.12);
+    box-shadow: 0 10px 24px rgba(20, 24, 38, 0.06);
     position: relative;
     z-index: 1;
     white-space: nowrap;
 }
 
 .nav-logo::before {
-    content: '??'; /* Creates an icon behind the project name */
-    position: absolute;
-    font-size: 50px;
-    opacity: 0.15;
-    z-index: -1;
-    left: -10px;
+    content: none;
+}
+
+.nav-logo-mark {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, var(--primary-red), var(--light-red));
+    color: #fff;
+    box-shadow: 0 12px 22px rgba(211, 47, 47, 0.22);
+    flex-shrink: 0;
+}
+
+.nav-logo-copy {
+    display: grid;
+    line-height: 1.1;
+}
+
+.nav-logo-copy strong {
+    font-size: 15px;
+    font-weight: 800;
+    letter-spacing: 0.02em;
+}
+
+.nav-logo-copy small {
+    font-size: 11px;
+    color: var(--text-muted);
+    font-weight: 600;
 }
 
 .nav-menu {
     display: flex;
     list-style: none;
-    gap: 8px; /* Further reduced to strictly fit all items */
+    gap: 10px;
     align-items: center;
     margin: 0;
     padding: 0;
+    flex-wrap: wrap;
+    justify-content: flex-end;
 }
 
 .nav-menu a, .nav-logout-btn {
     color: var(--text-main);
     text-decoration: none;
-    font-weight: 600;
-    font-size: 14px; /* Slightly smaller font */
+    font-weight: 700;
+    font-size: 14px;
     transition: var(--transition);
-    padding: 8px 10px; /* Tighter padding */
-    border-radius: 8px;
-    background: none;
-    border: none;
+    padding: 10px 14px;
+    border-radius: 999px;
+    background: rgba(255,255,255,0.7);
+    border: 1px solid transparent;
     cursor: pointer;
     font-family: inherit;
     white-space: nowrap;
+}
+
+.nav-menu a:hover,
+.nav-menu a.active,
+.nav-logout-btn:hover {
+    background: linear-gradient(135deg, var(--primary-red), var(--light-red));
+    color: var(--white);
+    transform: translateY(-1px);
+    box-shadow: 0 12px 22px rgba(211, 47, 47, 0.16);
 }
 
 .nav-profile-link {
@@ -147,11 +188,21 @@ body {
     line-height: 1;
 }
 
-.nav-menu a:hover,
-.nav-menu a.active,
-.nav-logout-btn:hover {
-    background: var(--light-red);
-    color: var(--white);
+.nav-theme-btn {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255,255,255,0.72);
+    border: 1px solid rgba(211,47,47,0.12);
+    box-shadow: 0 10px 24px rgba(20, 24, 38, 0.06);
+}
+
+.nav-theme-btn:hover {
+    transform: translateY(-2px) rotate(-6deg);
+    background: rgba(255,255,255,0.95);
 }
 
 /* --- SHARED CARD UI --- */
@@ -726,7 +777,22 @@ tbody tr:hover {
 .camp-page-shell {
     max-width: 1180px;
     margin: 0 auto;
-    padding: 28px 20px 60px;
+    padding: 28px 20px 70px;
+}
+
+.camp-strip-note {
+    margin: 14px 0 10px;
+    padding: 12px 16px;
+    border-radius: 16px;
+    background: rgba(255,255,255,0.82);
+    border: 1px dashed rgba(211,47,47,0.18);
+    color: var(--text-muted);
+    font-size: 14px;
+}
+
+.camp-strip-note span {
+    color: var(--primary-red);
+    font-weight: 800;
 }
 
 .camp-hero-actions {
@@ -734,6 +800,26 @@ tbody tr:hover {
     flex-wrap: wrap;
     gap: 12px;
     margin-top: 22px;
+}
+
+.camp-feature-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 18px;
+}
+
+.camp-feature-chip {
+    display: inline-flex;
+    align-items: center;
+    padding: 8px 12px;
+    border-radius: 999px;
+    background: rgba(255,255,255,0.14);
+    border: 1px solid rgba(255,255,255,0.16);
+    color: #fff;
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 0.03em;
 }
 
 .camp-hero-btn,
@@ -831,11 +917,11 @@ tbody tr:hover {
 
 .camp-map-card,
 .camp-booking-card {
-    background: rgba(255, 255, 255, 0.9);
+    background: linear-gradient(180deg, rgba(255,255,255,0.94), rgba(249,250,251,0.92));
     border: 1px solid rgba(211, 47, 47, 0.12);
     border-radius: 24px;
     padding: 20px;
-    box-shadow: 0 12px 30px rgba(20, 24, 38, 0.06);
+    box-shadow: 0 14px 34px rgba(20, 24, 38, 0.07);
 }
 
 .camp-map-card-head {
@@ -987,11 +1073,11 @@ tbody tr:hover {
 .camp-card {
     position: relative;
     overflow: hidden;
-    background: rgba(255, 255, 255, 0.88);
+    background: linear-gradient(180deg, rgba(255,255,255,0.92), rgba(250,251,253,0.88));
     border: 1px solid rgba(211, 47, 47, 0.12);
     border-radius: 24px;
     padding: 26px;
-    box-shadow: 0 12px 40px rgba(20, 24, 38, 0.08);
+    box-shadow: 0 14px 38px rgba(20, 24, 38, 0.08);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
 }
@@ -1043,6 +1129,22 @@ tbody tr:hover {
     background: #f5f7fb;
     color: var(--text-main);
     border: 1px solid var(--gray-border);
+}
+
+.camp-card:hover,
+.camp-map-card:hover,
+.camp-booking-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 18px 44px rgba(20, 24, 38, 0.1);
+}
+
+.camp-hero-btn,
+.camp-hero-link,
+.camp-details-btn,
+.camp-mini-btn,
+.camp-modal-join,
+.camp-modal-secondary {
+    box-shadow: 0 10px 22px rgba(20, 24, 38, 0.1);
 }
 
 .camp-modal {

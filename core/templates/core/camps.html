@@ -17,6 +17,11 @@
                     <button type="button" class="camp-hero-btn" onclick="document.getElementById('campSearch').focus()">Find a Camp</button>
                     <a href="{% url 'index' %}" class="camp-hero-link">Back to Donors</a>
                 </div>
+                <div class="camp-feature-row">
+                    <div class="camp-feature-chip">Live donor map</div>
+                    <div class="camp-feature-chip">Fast slot booking</div>
+                    <div class="camp-feature-chip">Verified camp details</div>
+                </div>
             </div>
             <div class="camp-hero-stats">
                 <div class="camp-stat">
@@ -45,6 +50,10 @@
             <span id="campVisibleCount">{{ camps|length }} visible</span>
         </div>
     </section>
+
+    <div class="camp-strip-note">
+        <span>Tip:</span> use search to filter both the map markers and the camp cards instantly.
+    </div>
 
     <section class="camp-map-grid">
         <div class="camp-map-card">
