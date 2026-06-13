@@ -1,10 +1,6 @@
 {% extends 'core/base.html' %}
 {% block title %}Upcoming Blood Camps{% endblock %}
 {% block body_class %}camp-environment-page{% endblock %}
-
-{% block extra_head %}
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
-{% endblock %}
 {% block content %}
 <div class="camp-page-shell">
     <section class="camp-hero">
@@ -18,7 +14,7 @@
                     <a href="{% url 'index' %}" class="camp-hero-link">Back to Donors</a>
                 </div>
                 <div class="camp-feature-row">
-                    <div class="camp-feature-chip">Live donor map</div>
+                    <div class="camp-feature-chip">Smart camp search</div>
                     <div class="camp-feature-chip">Fast slot booking</div>
                     <div class="camp-feature-chip">Verified camp details</div>
                 </div>
@@ -52,22 +48,14 @@
     </section>
 
     <div class="camp-strip-note">
-        <span>Tip:</span> use search to filter both the map markers and the camp cards instantly.
+        <span>Tip:</span> use search to filter the camp cards instantly.
     </div>
 
-    <section class="camp-map-grid">
-        <div class="camp-map-card">
-            <div class="camp-map-card-head">
-                <div>
-                    <p class="camp-section-kicker">Live Map</p>
-                    <h2>See camps on the map</h2>
-                </div>
-                <button type="button" class="camp-mini-btn" id="campMapRecenterBtn">Recenter</button>
-            </div>
-            <div id="campMap" class="camp-map" aria-label="Blood camp map"></div>
-            <p class="camp-map-note">Markers appear for camps that have latitude and longitude saved. Camps without coordinates still appear in the list below.</p>
-        </div>
+    <div id="campSearchEmpty" class="camp-empty" hidden>
+        <h3>No camps match your search. Try a camp name, location, date, or a broader keyword.</h3>
+    </div>
 
+    <section class="camp-booking-grid">
         <div class="camp-booking-card">
             <div class="camp-map-card-head">
                 <div class="camp-booking-copy">
@@ -108,7 +96,7 @@
 
     <div class="camp-list">
         {% for camp in camps %}
-        <div class="camp-card" data-camp-name="{{ camp.name|lower }}" data-camp-location="{{ camp.location|lower }}" data-camp-description="{{ camp.description|lower }}">
+        <div class="camp-card" data-camp-name="{{ camp.name|lower }}" data-camp-location="{{ camp.location|lower }}" data-camp-description="{{ camp.description|lower }}" data-camp-date="{{ camp.date|date:'Y-m-d' }}" data-camp-keywords="camp blood donation schedule blood camp">
             <div class="camp-card-grid">
                 <div>
                     <h2>{{ camp.name }}</h2>
@@ -171,6 +159,7 @@
     const campSearch = document.getElementById('campSearch');
     const campCards = Array.from(document.querySelectorAll('.camp-card'));
     const campVisibleCount = document.getElementById('campVisibleCount');
+    const campSearchEmpty = document.getElementById('campSearchEmpty');
     const campModal = document.getElementById('campModal');
     const campModalTitle = document.getElementById('campModalTitle');
     const campModalDate = document.getElementById('campModalDate');
@@ -184,16 +173,14 @@
         let visibleCount = 0;
 
         campCards.forEach(card => {
-            const haystack = `${card.dataset.campName} ${card.dataset.campLocation} ${card.dataset.campDescription}`;
+            const haystack = `${card.dataset.campName} ${card.dataset.campLocation} ${card.dataset.campDescription} ${card.dataset.campDate} ${card.dataset.campKeywords}`;
             const matches = !query || haystack.includes(query);
             card.style.display = matches ? '' : 'none';
             if (matches) visibleCount += 1;
         });
 
         campVisibleCount.textContent = `${visibleCount} visible`;
-        if (window.refreshCampMarkerVisibility) {
-            window.refreshCampMarkerVisibility();
-        }
+        campSearchEmpty.hidden = visibleCount !== 0;
     }
 
     function openCampModal(details) {
@@ -238,82 +225,11 @@
             closeCampModal();
         }
     });
+
+    filterCamps();
 </script>
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 <script>
     (function () {
-        const mapElement = document.getElementById('campMap');
-        if (!mapElement || typeof L === 'undefined') {
-            return;
-        }
-
-        const map = L.map('campMap', { scrollWheelZoom: false }).setView([23.8103, 90.4125], 7);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            maxZoom: 19,
-            attribution: '&copy; OpenStreetMap contributors',
-        }).addTo(map);
-
-        const markers = [];
-        let campsPayload = [];
-
-        function applyMarkerFilter() {
-            const query = (campSearch.value || '').trim().toLowerCase();
-            markers.forEach(marker => {
-                const data = marker._campData || {};
-                const matches = !query || `${data.name || ''} ${data.location || ''} ${data.description || ''}`.includes(query);
-                if (matches) {
-                    marker.addTo(map);
-                } else {
-                    map.removeLayer(marker);
-                }
-            });
-        }
-
-        window.refreshCampMarkerVisibility = applyMarkerFilter;
-
-        async function loadMapData() {
-            try {
-                const response = await fetch('{% url 'api_camps' %}', { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
-                const payload = await response.json();
-                campsPayload = payload.camps || [];
-
-                markers.forEach(marker => map.removeLayer(marker));
-                markers.length = 0;
-
-                const bounds = [];
-                campsPayload.forEach(camp => {
-                    if (camp.latitude === null || camp.longitude === null || camp.latitude === undefined || camp.longitude === undefined) {
-                        return;
-                    }
-
-                    const marker = L.marker([camp.latitude, camp.longitude]).addTo(map);
-                    marker.bindPopup(`<strong>${camp.name}</strong><br>${camp.location}<br>${camp.date}`);
-                    marker._campData = {
-                        name: (camp.name || '').toLowerCase(),
-                        location: (camp.location || '').toLowerCase(),
-                        description: (camp.description || '').toLowerCase(),
-                    };
-                    markers.push(marker);
-                    bounds.push([camp.latitude, camp.longitude]);
-                });
-
-                if (bounds.length) {
-                    map.fitBounds(bounds, { padding: [30, 30] });
-                }
-
-                applyMarkerFilter();
-            } catch (error) {
-                console.error('Failed to load camps for map', error);
-            }
-        }
-
-        const recenterBtn = document.getElementById('campMapRecenterBtn');
-        if (recenterBtn) {
-            recenterBtn.addEventListener('click', () => {
-                map.setView([23.8103, 90.4125], 7);
-            });
-        }
-
         const appointmentForm = document.getElementById('appointmentForm');
         const appointmentCamp = document.getElementById('appointmentCamp');
         const appointmentDateTime = document.getElementById('appointmentDateTime');
@@ -369,8 +285,6 @@
                 }
             });
         }
-
-        loadMapData();
     })();
 </script>
 {% endblock %}
